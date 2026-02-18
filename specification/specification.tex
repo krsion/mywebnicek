@@ -126,7 +126,7 @@ The following functional requirements specify the capabilities of the system. Re
 
 \textbf{FR-06: Undo/Redo} [Core] The system shall maintain an undo stack and redo stack for each local session. Undo shall reverse the most recent local operation, and redo shall reapply the most recently undone operation.
 
-\textbf{FR-07: Recording} [Core] The system shall automatically record all local document mutations by subscribing to Loro's event system. Each local event carries diffs that are accumulated and converted to generalized patches with concrete node IDs. Variable placeholders (\texttt{\$0}, \texttt{\$1}, etc.) are assigned only when storing actions in a button or at replay time, not in the recorded history.
+\textbf{FR-07: Recording} [Core] The system shall automatically record all local document mutations as generalized patches with concrete node IDs. Variable placeholders (\texttt{\$0}, \texttt{\$1}, etc.) are assigned only when storing actions in a button or at replay time, not in the recorded history.
 
 \textbf{FR-08: Replay} [Core] The system shall support replaying a recorded script starting from a specified node. The generalized node IDs in the script shall be bound to actual node IDs based on the starting node.
 
@@ -136,7 +136,7 @@ The following functional requirements specify the capabilities of the system. Re
 
 \textbf{FR-11: Ref Nodes} [Core] Ref nodes reference other nodes via a \texttt{target} ID. In formulas, they resolve to the target's value.
 
-\textbf{FR-12: Action Nodes} [Core] Action nodes store recorded operations as generalized patches. They have a \texttt{label}, \texttt{target} (bound to \texttt{\$0}), and \texttt{actions} list. Triggering replays patches on the target.
+\textbf{FR-12: Action Nodes} [Core] Action nodes store recorded operations as generalized patches. They have a \texttt{label}, \texttt{params} (named parameter bindings), and \texttt{actions} list. Triggering replays patches with the bound parameters.
 
 \subsubsection{Web Application Requirements}
 
@@ -167,7 +167,7 @@ The following functional requirements specify the capabilities of the system. Re
 
 \textbf{FR-22: Formula Rendering} [Web] Formula nodes display computed results or formula structure (for debugging).
 
-\textbf{FR-23: Action Node Rendering} [Web] Action nodes render as buttons; clicking triggers replay on the target.
+\textbf{FR-23: Action Node Rendering} [Web] Action nodes render as buttons; clicking triggers replay with the bound parameters.
 
 
 \subsection{Non-functional requirements}
@@ -217,7 +217,7 @@ The core library (\texttt{@mydenicek/core}) follows a ``deep module'' design whe
 \item Read: \texttt{getNode()}, \texttt{getParentId()}, \texttt{getChildIds()}, \texttt{getRootId()}
 \item Write: \texttt{addChild()}, \texttt{deleteNode()}, \texttt{moveNode()}, \texttt{copyNode()}, \texttt{updateAttribute()}, \texttt{updateTag()}, \texttt{spliceValue()}, \texttt{updateFormulaOperation()}, \texttt{updateRefTarget()}
 \item Undo/Redo: \texttt{undo()}, \texttt{redo()}, \texttt{canUndo}, \texttt{canRedo}
-\item Recording: \texttt{replay(script, startNodeId)}, \texttt{getHistory()}, \texttt{clearHistory()}
+\item Recording: \texttt{replay(script, params)}, \texttt{getHistory()}, \texttt{clearHistory()}
 \item Sync: \texttt{connectToSync()}, \texttt{disconnectSync()}
 \item Serialization: \texttt{export()}, \texttt{import()}
 \end{itemize}
@@ -231,7 +231,7 @@ Each mutation method commits automatically, and Loro's undo manager groups rapid
 \item React component calls \texttt{document.addChild(parentId, \{ ... \})}
 \item DenicekDocument applies the change to the Loro document and commits
 \item Loro generates patches; undo manager captures inverse
-\item The document's event subscription captures per-event diffs for the history view
+\item The document records the mutation for the history view
 \item Loro synchronizes changes to connected peers via WebSocket
 \item Remote peers receive patches and update their local document
 \item React re-renders based on the updated document state
@@ -262,7 +262,7 @@ The evaluator traverses the formula tree recursively:
 
 \subsubsection{Built-in Operations}
 
-\textbf{String:} \texttt{lowerText}, \texttt{upperText}, \texttt{capitalize}, \texttt{concat} (variadic), \texttt{trim}, \texttt{length}, \texttt{replace}
+\textbf{String:} \texttt{lowerText}, \texttt{upperText}, \texttt{capitalize}, \texttt{concat} (variadic), \texttt{trim}, \texttt{length}, \texttt{replace}, \texttt{splitFirst}, \texttt{splitLast}
 
 \textbf{Math:} \texttt{sum}, \texttt{product}, \texttt{mod}, \texttt{round}, \texttt{floor}, \texttt{ceil}, \texttt{abs}
 
@@ -291,11 +291,11 @@ Action nodes enable programming by demonstration: users record operations and sa
 
 \subsubsection{Structure}
 
-An action node stores: \texttt{label} (display text), \texttt{target} (node bound to \texttt{\$0}), and \texttt{actions} (list of \texttt{GeneralizedPatch} objects).
+An action node stores: \texttt{label} (display text), \texttt{params} (named parameter bindings mapping names to node IDs), and \texttt{actions} (list of \texttt{GeneralizedPatch} objects).
 
 \subsubsection{Generalized Patches}
 
-Raw Loro diffs reference concrete container and tree IDs, tying them to a specific document state. Generalized patches introduce two abstractions on top of Loro diffs that make them portable and replayable: (1)~variable placeholders (\texttt{\$0}, \texttt{\$1}, ...) can replace concrete node IDs so the same script can be replayed on different target nodes, and (2)~create patches distinguish copies (\texttt{sourceId}) from direct creates (\texttt{data}) so replay knows whether to call \texttt{copyNode} or \texttt{addChildren}.
+Generalized patches are portable representations of document mutations with two key abstractions: (1)~named variable placeholders (\texttt{\$wrapper}, \texttt{\$innerValue}, etc.) can replace concrete node IDs so the same script can be replayed on different target nodes, and (2)~create patches distinguish copies (\texttt{sourceId}) from direct creates (\texttt{data}) so replay knows whether to call \texttt{copyNode} or \texttt{addChildren}.
 
 The recording history stores patches with concrete node IDs, which are displayed as clickable references in the UI. Variable placeholders are only used in stored button scripts (action nodes) and are assigned automatically when the user saves recorded actions to a button or triggers replay. There are three patch types:
 
@@ -303,7 +303,7 @@ The recording history stores patches with concrete node IDs, which are displayed
 TreePatch {
     type: "tree"
     action: "create" | "delete" | "move"
-    target: string          // $0, $1, ... or node ID
+    target: string          // $wrapper, $1, ... or node ID
     parent?: string         // parent node variable/ID
     index?: number          // position among siblings
     sourceId?: string       // source node for copies
@@ -326,25 +326,25 @@ TextPatch {
 }
 \end{verbatim}
 
-Variables (used in button scripts and replay only): \texttt{\$0} is the target node; \texttt{\$1}, \texttt{\$2}, ... are nodes created during replay.
+Variables: Named parameters (\texttt{\$wrapper}, \texttt{\$innerValue}, etc.) reference existing nodes via the action node's \texttt{params} mapping; numeric variables (\texttt{\$1}, \texttt{\$2}, ...) are assigned to nodes created during replay.
 
 \subsubsection{Recording}
 
-Recording is automatic---the \texttt{DenicekDocument} subscribes to Loro's event system and accumulates per-event diffs for all local mutations. These diffs are converted to generalized patches on demand:
+Recording is automatic---each mutation method in \texttt{DenicekDocument} records its operation as a generalized patch:
 \begin{enumerate}
 \item Perform operations (add, edit, delete, move nodes)
-\item Loro fires events; the subscriber captures the diffs carried by each event
-\item \texttt{getHistory()} converts accumulated diffs to generalized patches with concrete node IDs, suppressing redundant map/text patches for same-event node creates
+\item Each mutation is recorded as a generalized patch with concrete node IDs
+\item \texttt{getHistory()} returns the accumulated patches
 \item The UI displays patches with clickable node IDs; users can retarget any ID to a different node and select a subset of actions
-\item Click ``Apply'' to replay on the selected node, or ``Add to Button'' to store in an action node---at this point, concrete IDs are generalized to variable placeholders (\texttt{\$0}, \texttt{\$1}, ...) automatically
+\item Click ``Apply'' to replay on the selected node, or ``Add to Button'' to store in an action node---at this point, concrete IDs are generalized to named variable placeholders (\texttt{\$wrapper}, \texttt{\$innerValue}, etc.) automatically
 \end{enumerate}
 
 \subsubsection{Replay}
 
 \begin{enumerate}
 \item Click button or use replay controls
-\item System maps \texttt{\$0} to target node
-\item For each patch: substitute variables, apply patch, assign new variables to created nodes
+\item System builds variable map from the action node's \texttt{params} (e.g., \texttt{\$wrapper} $\rightarrow$ node ID)
+\item For each patch: substitute variables, apply patch, assign new numeric variables (\texttt{\$1}, \texttt{\$2}, ...) to created nodes
 \end{enumerate}
 
 \subsubsection{Rendering}
@@ -375,6 +375,67 @@ To create the button: the user selects the \texttt{ul}, adds a new empty \texttt
 Demonstrates reactive computation. The document contains value nodes for quantity (\texttt{"3"}) and price (\texttt{"25"}), plus a \texttt{formula(product)} node referencing both. The formula evaluates to \texttt{"75"} and updates automatically when either value changes.
 
 Additional formulas like \texttt{countChildren} can count items in a list dynamically.
+
+\subsubsection{Conference List (Named Parameters)}
+
+Demonstrates structural refactoring with named parameters. The user starts with a simple list of conference attendees:
+
+\begin{verbatim}
+<ul>
+  <li>John Doe</li>
+  <li>Jane Smith</li>
+  <li>Bob Johnson</li>
+</ul>
+\end{verbatim}
+
+The goal is to transform this into a table with separate columns for first and last names, using formulas to split the original value.
+
+\textbf{Recording the transformation:} The user performs the following steps on the first row:
+\begin{enumerate}
+\setlength{\itemsep}{-3pt}
+\item Rename \texttt{ul} to \texttt{table} (one-time setup)
+\item Rename the first \texttt{li} to \texttt{tr}
+\item Add a \texttt{td} element as the first child of the \texttt{tr}
+\item Move the original value node (``John Doe'') into the new \texttt{td}
+\item Add a \texttt{formula(splitFirst)} node as a sibling, with a \texttt{ref} pointing to the value node---this displays ``John''
+\item Add a second \texttt{td} element to the \texttt{tr}
+\item Add a \texttt{formula(splitLast)} node inside the second \texttt{td}, with a \texttt{ref} pointing to the same value node---this displays ``Doe''
+\end{enumerate}
+
+The result for the first row:
+\begin{verbatim}
+<tr>
+  <td>
+    John Doe
+    <formula op="splitFirst"><ref target="value_id"/></formula>
+  </td>
+  <td>
+    <formula op="splitLast"><ref target="value_id"/></formula>
+  </td>
+</tr>
+\end{verbatim}
+
+\textbf{Creating the action button:} The user selects the recorded steps (excluding the one-time \texttt{ul}$\rightarrow$\texttt{table} rename) and clicks ``Add to Button''. The recording references two node IDs. For each referenced ID, the user can either mark it as \emph{fixed} (hardcoded) or give it a name to make it a parameter:
+\begin{itemize}
+\setlength{\itemsep}{-3pt}
+\item The \texttt{li} element $\rightarrow$ named \texttt{wrapper}
+\item The value node $\rightarrow$ named \texttt{innerValue}
+\end{itemize}
+
+These named parameters are stored in the action node's \texttt{params} field.
+
+\textbf{Replaying on other rows:} To transform the remaining rows, the user:
+\begin{enumerate}
+\setlength{\itemsep}{-3pt}
+\item Clicks the action button
+\item A popover appears prompting the user to select each named parameter
+\item User clicks the second \texttt{li} element to bind \texttt{wrapper}
+\item User clicks the value node inside it to bind \texttt{innerValue}
+\item The transformation executes with the selected nodes
+\item Repeats for each remaining row
+\end{enumerate}
+
+This workflow is similar to how \texttt{ref} node targets are selected, providing a consistent interaction pattern.
 
 
 \section{Platform and technologies}

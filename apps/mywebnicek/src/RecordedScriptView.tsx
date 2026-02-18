@@ -8,12 +8,18 @@ import type { CreatedNodeInfo } from "./utils/scriptAnalysis";
 
 // Check if a string is a variable placeholder ($0, $1, etc.)
 function isVariablePlaceholder(id: string): boolean {
-    return /^\$\d+$/.test(id);
+    return id.startsWith("$");
 }
 
-function getVariableNumber(id: string): number | null {
-    const match = id.match(/^\$(\d+)$/);
-    return match?.[1] ? parseInt(match[1], 10) : null;
+/** Get variable name from placeholder (e.g., "$wrapper" -> "wrapper", "$1" -> "1") */
+function getVariableName(id: string): string | null {
+    if (!id.startsWith("$")) return null;
+    return id.slice(1);
+}
+
+/** Check if variable is a numeric created-node placeholder ($1, $2, etc.) */
+function isNumericVariable(id: string): boolean {
+    return /^\$\d+$/.test(id);
 }
 
 interface RecordedScriptViewProps {
@@ -32,11 +38,11 @@ interface RecordedScriptViewProps {
     mode?: "history" | "view";
     /** Callback when delete button is clicked in view mode */
     onDeleteAction?: (index: number) => void;
-    /** The target node ID for $0 placeholder (used when viewing button actions) */
-    actionTarget?: string;
+    /** Named params for placeholder resolution (used when viewing button actions) */
+    actionParams?: Record<string, string>;
 }
 
-export function RecordedScriptView({ script, onNodeClick, selectedIndices, onSelectionChange, idOverrides, onRetarget, currentNodeId, createdNodes, mode = "history", onDeleteAction, actionTarget }: RecordedScriptViewProps) {
+export function RecordedScriptView({ script, onNodeClick, selectedIndices, onSelectionChange, idOverrides, onRetarget, currentNodeId, createdNodes, mode = "history", onDeleteAction, actionParams }: RecordedScriptViewProps) {
     const { formatValue } = usePeerAlias();
     const hasSelection = selectedIndices !== undefined && onSelectionChange !== undefined;
     const allSelected = hasSelection && script.length > 0 && selectedIndices.size === script.length;
@@ -125,12 +131,19 @@ export function RecordedScriptView({ script, onNodeClick, selectedIndices, onSel
                             function renderNodeRef(nodeId: string): React.ReactNode {
                                 // In view mode, handle variable placeholders from stored button actions
                                 if (isViewMode) {
-                                    const varNum = getVariableNumber(nodeId);
-                                    if (varNum !== null) {
-                                        if (varNum === 0 && actionTarget) {
-                                            return <NodeId id={actionTarget} onClick={onNodeClick} />;
+                                    const varName = getVariableName(nodeId);
+                                    if (varName !== null) {
+                                        // Check if this is a named param that we can resolve
+                                        const resolvedId = actionParams?.[varName];
+                                        if (resolvedId) {
+                                            return <NodeId id={resolvedId} onClick={onNodeClick} />;
                                         }
-                                        return <Badge appearance="outline" color="success" size="small">#{varNum}</Badge>;
+                                        // Numeric variables ($1, $2, etc.) are created during replay
+                                        if (isNumericVariable(nodeId)) {
+                                            return <Badge appearance="outline" color="success" size="small">#{varName}</Badge>;
+                                        }
+                                        // Named param without resolution - show as badge
+                                        return <Badge appearance="outline" color="informative" size="small">${varName}</Badge>;
                                     }
                                 }
 

@@ -108,7 +108,8 @@ function getConsumedChildIndices(
 
 interface RenderedDocumentProps {
   document: DenicekDocument;
-  onActionClick?: (actions: GeneralizedPatch[], target: string, replayMode: "fixed" | "selected") => void;
+  /** Called when an action button is clicked. Receives actions and param names to be bound. */
+  onActionClick?: (actions: GeneralizedPatch[], paramNames: string[]) => void;
   /** View mode for formulas: "result" shows computed values, "formula" shows structure */
   viewMode?: FormulaViewMode;
   /** Custom operations map. If not provided, uses defaultOperationsMap */
@@ -157,16 +158,18 @@ export function RenderedDocument({ document, onActionClick, viewMode = "result",
     const node = document.getNode(nodeId);
     if (!node || node.kind !== "action") return;
 
-    const { actions, target, replayMode } = node;
+    const { actions, params } = node;
     if (!actions.length) return;
-    // For fixed mode, require target; for selected mode, target is optional
-    if (replayMode !== "selected" && !target) return;
+
+    const paramNames = Object.keys(params);
 
     if (onActionClick) {
-      onActionClick(actions, target, replayMode ?? "fixed");
+      onActionClick(actions, paramNames);
     } else {
-      // Fallback: replay directly on the document (only works for fixed mode)
-      document.replay(actions, target);
+      // Fallback: replay directly on the document (no params to bind)
+      if (paramNames.length === 0) {
+        document.replay(actions, {});
+      }
     }
   }, [document, onActionClick]);
 
@@ -296,13 +299,15 @@ export function RenderedDocument({ document, onActionClick, viewMode = "result",
 
     // Handle action nodes - render as buttons
     if (node.kind === "action") {
-      const isSelectedMode = node.replayMode === "selected";
+      const paramNames = Object.keys(node.params);
+      const paramsTitle = paramNames.length > 0
+        ? `Params: ${paramNames.map(n => `$${n}`).join(", ")}`
+        : "No params";
       return React.createElement(
         'button',
         {
           [DENICEK_NODE_ID_ATTR]: id,
           className: styles.button,
-          style: isSelectedMode ? { borderLeft: '3px solid #0078d4' } : undefined,
           onClick: (e: React.MouseEvent) => {
             // Allow Ctrl+click/Shift+click for selection (don't execute)
             if (e.ctrlKey || e.metaKey || e.shiftKey) {
@@ -311,9 +316,8 @@ export function RenderedDocument({ document, onActionClick, viewMode = "result",
             e.stopPropagation();  // Don't trigger selection on regular click
             handleActionClick(id);
           },
-          title: isSelectedMode ? "Replays on selected node" : `Target: ${node.target}`,
+          title: paramsTitle,
         },
-        isSelectedMode ? "\u25B6 " : "",
         node.label
       );
     }

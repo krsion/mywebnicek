@@ -39,8 +39,7 @@ export interface ActionNodeData {
     kind: "action";
     label: string;
     actions: GeneralizedPatch[];
-    target: string;  // Node ID for $0 during replay
-    replayMode?: "fixed" | "selected";  // "fixed" = replay on target, "selected" = replay on selected node
+    params: Record<string, string>;  // Named parameters: param name -> node ID
     sourceId?: string;  // Reference to source node if this is a copy
 }
 
@@ -117,8 +116,7 @@ export interface ActionNode {
     kind: "action";
     label: string;
     actions: LoroList;  // LoroList for CRDT list operations
-    target: string;
-    replayMode?: "fixed" | "selected";
+    params: Record<string, string>;  // Named parameters: param name -> node ID
     sourceId?: string;  // Reference to source node if this is a copy
 }
 

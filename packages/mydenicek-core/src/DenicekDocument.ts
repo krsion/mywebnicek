@@ -18,11 +18,10 @@ import {
     NODE_KIND,
     NODE_LABEL,
     NODE_OPERATION,
+    NODE_PARAMS,
     NODE_REF_TARGET,
-    NODE_REPLAY_MODE,
     NODE_SOURCE_ID,
     NODE_TAG,
-    NODE_TARGET,
     NODE_TEXT,
     stringToTreeId,
     TREE_CONTAINER,
@@ -34,7 +33,7 @@ import type { ElementNode, GeneralizedPatch, GroupedPatch, NodeData, PatchNodeDa
 export type NodeInput =
     | ElementNode
     | { kind: "value"; value: string }
-    | { kind: "action"; label: string; actions: GeneralizedPatch[]; target: string; replayMode?: "fixed" | "selected" }
+    | { kind: "action"; label: string; actions: GeneralizedPatch[]; params: Record<string, string> }
     | { kind: "formula"; operation: string }
     | { kind: "ref"; target: string };
 
@@ -550,10 +549,7 @@ export class DenicekDocument {
                 } else if (sanitizedChild.kind === "action") {
                     data.set(NODE_KIND, "action");
                     data.set(NODE_LABEL, sanitizedChild.label);
-                    data.set(NODE_TARGET, sanitizedChild.target);
-                    if (sanitizedChild.replayMode) {
-                        data.set(NODE_REPLAY_MODE, sanitizedChild.replayMode);
-                    }
+                    data.set(NODE_PARAMS, sanitizedChild.params);
                     const actionsList = data.setContainer(NODE_ACTIONS, new LoroList()) as LoroList;
                     for (const action of sanitizedChild.actions) {
                         actionsList.push(action);
@@ -663,11 +659,8 @@ export class DenicekDocument {
             } else if (sourceKind === "action") {
                 data.set(NODE_KIND, "action");
                 data.set(NODE_LABEL, (sourceData.get(NODE_LABEL) as string) || "Action");
-                data.set(NODE_TARGET, (sourceData.get(NODE_TARGET) as string) || "");
-                const sourceReplayMode = sourceData.get(NODE_REPLAY_MODE) as string | undefined;
-                if (sourceReplayMode) {
-                    data.set(NODE_REPLAY_MODE, sourceReplayMode);
-                }
+                const sourceParams = sourceData.get(NODE_PARAMS);
+                data.set(NODE_PARAMS, sourceParams && typeof sourceParams === "object" ? sourceParams : {});
                 const actionsList = data.setContainer(NODE_ACTIONS, new LoroList()) as LoroList;
                 const sourceActions = sourceData.get(NODE_ACTIONS) as LoroList | undefined;
                 if (sourceActions) {
@@ -957,11 +950,8 @@ export class DenicekDocument {
                 if (property === "label") {
                     data.set(NODE_LABEL, value as string);
                     this._doc.commit();
-                } else if (property === "target") {
-                    data.set(NODE_TARGET, value as string);
-                    this._doc.commit();
-                } else if (property === "replayMode") {
-                    data.set(NODE_REPLAY_MODE, value as string);
+                } else if (property === "params") {
+                    data.set(NODE_PARAMS, value as Record<string, string>);
                     this._doc.commit();
                 } else if (property === "actions") {
                     const actionsContainer = data.get(NODE_ACTIONS) as LoroList | undefined;
@@ -1351,13 +1341,17 @@ export class DenicekDocument {
     }
 
     /**
-     * Replay a recorded script on a new starting node
+     * Replay a recorded script with named parameter bindings
      * @param script The recorded patches to replay
-     * @param startNodeId The node ID to use as $0 for this replay
+     * @param params Named parameters mapping param names to node IDs (e.g., { wrapper: "id1", innerValue: "id2" })
      */
-    replay(script: GeneralizedPatch[], startNodeId: string): void {
+    replay(script: GeneralizedPatch[], params: Record<string, string>): void {
         const vars = new Map<string, string>();
-        vars.set("$0", startNodeId);
+        for (const [name, nodeId] of Object.entries(params)) {
+            // Add $ prefix if not already present
+            const varName = name.startsWith("$") ? name : `$${name}`;
+            vars.set(varName, nodeId);
+        }
 
         // Track nodes created via copyNode — their map/text patches are redundant
         // because copyNode already captures the full current state
@@ -1463,7 +1457,14 @@ export class DenicekDocument {
             }
 
             if (patch.type === "map") {
-                this.updateAttribute([patch.target], patch.key, patch.value);
+                // Special node properties are stored directly on node data, not in attrs
+                const specialKeys = new Set(["tag", "operation", "label", "params", "actions", "refTarget", "target"]);
+                if (specialKeys.has(patch.key)) {
+                    this.updateNodeProperty(patch.target, patch.key, patch.value);
+                } else {
+                    // Regular attributes (style, className, etc.) go into the attrs map
+                    this.updateAttribute([patch.target], patch.key, patch.value);
+                }
                 return undefined;
             }
 

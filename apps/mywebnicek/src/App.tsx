@@ -1,4 +1,4 @@
-import { Badge, Button, Card, CardHeader, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, DialogTrigger, Spinner, Switch, Tag, TagGroup, Text, Toast, Toaster, Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup, Tooltip, useId, useToastController } from "@fluentui/react-components";
+import { Badge, Button, Card, CardHeader, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, DialogTrigger, Input, Spinner, Switch, Tag, TagGroup, Text, Toast, Toaster, Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup, Tooltip, useId, useToastController } from "@fluentui/react-components";
 import { AddRegular, ArrowDownRegular, ArrowLeftRegular, ArrowRedoRegular, ArrowRightRegular, ArrowUndoRegular, ArrowUpRegular, CalculatorRegular, CameraRegular, ClipboardPasteRegular, CodeRegular, CopyRegular, DeleteRegular, DismissRegular, EditRegular, InfoRegular, LinkRegular, PersonRegular, PlayRegular, RecordRegular, RenameRegular, StopRegular } from "@fluentui/react-icons";
 import type { GeneralizedPatch, Snapshot } from "@mydenicek/core";
 import {
@@ -26,7 +26,7 @@ import { JsonView } from "./JsonView.tsx";
 import { RecordedScriptView } from "./RecordedScriptView";
 import { RenderedDocument } from "./RenderedDocument.tsx";
 import { sanitizeTagName, ToolbarPopoverButton, validateTagName } from "./ToolbarPopoverButton";
-import { analyzeSelection, applyIdOverrides, generalizeScript } from "./utils/scriptAnalysis";
+import { analyzeSelection, applyIdOverrides, extractReferencedIds, generalizeScript, generalizeScriptWithParams } from "./utils/scriptAnalysis";
 import { generalizeSelection } from "./utils/selectionUtils";
 
 // Generate a random room ID
@@ -77,6 +77,17 @@ export const App = () => {
   // Pinned button ID for viewing actions (stays visible even when navigating to other nodes)
   const [pinnedButtonId, setPinnedButtonId] = useState<string | null>(null);
 
+  // Action param pick mode: when clicking an action button, user selects nodes for each param
+  const [actionParamPickMode, setActionParamPickMode] = useState<{
+    actions: GeneralizedPatch[];
+    paramNames: string[];
+    currentIndex: number;
+    collectedParams: Record<string, string>;
+  } | null>(null);
+
+  // Parameter configuration for "Add to Button" dialog
+  const [paramConfig, setParamConfig] = useState<Record<string, { name: string; fixed: boolean }>>({});
+
   // Peer name state
   const [peerName, setPeerName] = useState<string>(() =>
     localStorage.getItem(PEER_NAME_STORAGE_KEY) || ""
@@ -126,18 +137,18 @@ export const App = () => {
       case "element": return { kind: "element" as const, tag: content, attrs: {}, children: [] };
       case "formula": return { kind: "formula" as const, operation: content };
       case "ref": return { kind: "ref" as const, target: content };
-      case "action": return { kind: "action" as const, label: content, actions: [], target: defaultTarget };
+      case "action": return { kind: "action" as const, label: content, actions: [], params: { target: defaultTarget } };
     }
   }, []);
 
   // Find all action nodes in document
   const actionNodes = useMemo(() => {
-    const nodes: { id: string; label: string; target: string }[] = [];
+    const nodes: { id: string; label: string; params: Record<string, string> }[] = [];
     const traverse = (id: string) => {
       const node = document.getNode(id);
       if (!node) return;
       if (node.kind === "action") {
-        nodes.push({ id, label: node.label, target: node.target });
+        nodes.push({ id, label: node.label, params: node.params });
       }
       if (node.kind === "element") {
         const childIds = document.getChildIds(id);
@@ -348,7 +359,7 @@ export const App = () => {
     const overridden = applyIdOverrides(actionsToReplay, idOverrides);
     // Generalize: created nodes → $1, $2, etc.
     const generalized = generalizeScript(overridden);
-    replay(generalized, selectedNodeId);
+    replay(generalized, { target: selectedNodeId });
   };
 
   const handleActionSelectionChange = useCallback((indices: Set<number>) => {
@@ -369,54 +380,78 @@ export const App = () => {
     });
   }, []);
 
-  // Add selected actions to an existing action node
-  const handleAddToButton = useCallback(() => {
-    if (!recordingHistory || selectedActionIndices.size === 0 || !selectedActionNodeId) return;
-
-    // Get indices to use (selected actions)
+  // Get actions to add (with overrides applied) - used by dialog
+  const actionsToAdd = useMemo(() => {
+    if (!recordingHistory || selectedActionIndices.size === 0) return [];
     const indicesToUse = Array.from(selectedActionIndices).sort((a, b) => a - b);
     const actionsToUse = indicesToUse
       .map(i => recordingHistory[i])
       .filter((action): action is NonNullable<typeof action> => action !== null);
+    return applyIdOverrides(actionsToUse, idOverrides);
+  }, [recordingHistory, selectedActionIndices, idOverrides]);
 
-    if (actionsToUse.length === 0) return;
+  // Extract referenced IDs from selected actions (for param config dialog)
+  const extractedIds = useMemo(() => {
+    if (!showAddToButtonDialog || actionsToAdd.length === 0) return [];
+    return extractReferencedIds(actionsToAdd);
+  }, [showAddToButtonDialog, actionsToAdd]);
 
-    // Apply global ID overrides
-    const overridden = applyIdOverrides(actionsToUse, idOverrides);
+  // Initialize param config when dialog opens or IDs change
+  useEffect(() => {
+    if (showAddToButtonDialog && extractedIds.length > 0) {
+      const newConfig: Record<string, { name: string; fixed: boolean }> = {};
+      extractedIds.forEach((id, index) => {
+        // Preserve existing config if available, otherwise create default
+        if (paramConfig[id]) {
+          newConfig[id] = paramConfig[id];
+        } else {
+          newConfig[id] = { name: `param${index}`, fixed: false };
+        }
+      });
+      setParamConfig(newConfig);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAddToButtonDialog, extractedIds.join(",")]);
 
-    // Get the button's target to map as $0 for reusability
-    const buttonNode = document.getNode(selectedActionNodeId);
-    const startNodeId = buttonNode?.kind === "action" ? buttonNode.target : undefined;
+  // Add selected actions to an existing action node
+  const handleAddToButton = useCallback(() => {
+    if (actionsToAdd.length === 0 || !selectedActionNodeId) return;
 
-    // Generalize: created nodes → $1, $2, etc.; button target → $0
-    const generalized = generalizeScript(overridden, startNodeId);
+    // Build params from config (only non-fixed entries become params)
+    const params: Record<string, string> = {};
+    for (const [nodeId, config] of Object.entries(paramConfig)) {
+      if (!config.fixed && config.name.trim()) {
+        params[config.name.trim()] = nodeId;
+      }
+    }
 
-    // Append actions to the existing action node
+    // Generalize: replace param IDs with $name, created nodes with $1, $2, etc.
+    const generalized = generalizeScriptWithParams(actionsToAdd, params);
+
+    // Update the button's params and append actions
+    document.updateNodeProperty(selectedActionNodeId, "params", params);
     document.appendActions(selectedActionNodeId, generalized);
 
     setShowAddToButtonDialog(false);
     setSelectedActionNodeId(null);
-  }, [recordingHistory, selectedActionIndices, idOverrides, document, selectedActionNodeId]);
+    setParamConfig({});
+  }, [actionsToAdd, paramConfig, document, selectedActionNodeId]);
 
-  // Handler for action button clicks
-  const handleActionClick = useCallback((actions: GeneralizedPatch[], target: string, replayMode: "fixed" | "selected") => {
-    if (replayMode === "selected") {
-      if (!selectedNodeId) return;
-      // Find the actual context node from the actions (first concrete parent in a create patch)
-      // This handles cases where the button's target differs from the node referenced in actions
-      let contextId = target;
-      for (const a of actions) {
-        if (a.type === "tree" && a.action === "create" && !a.parent.startsWith("$")) {
-          contextId = a.parent;
-          break;
-        }
-      }
-      const generalized = generalizeScript(actions, contextId || undefined);
-      replay(generalized, selectedNodeId);
+  // Handler for action button clicks - enters param pick mode if there are params to bind
+  const handleActionClick = useCallback((actions: GeneralizedPatch[], paramNames: string[]) => {
+    if (paramNames.length === 0) {
+      // No params to bind - execute immediately
+      replay(actions, {});
     } else {
-      replay(actions, target);
+      // Enter param pick mode
+      setActionParamPickMode({
+        actions,
+        paramNames,
+        currentIndex: 0,
+        collectedParams: {},
+      });
     }
-  }, [replay, selectedNodeId]);
+  }, [replay]);
 
   // Handler for move up/down buttons
   const handleMoveInSiblings = useCallback((direction: -1 | 1) => {
@@ -734,12 +769,58 @@ export const App = () => {
                   <Button size="small" onClick={() => setCutNodeIds([])}>Cancel</Button>
                 </div>
               )}
+              {actionParamPickMode && (
+                <div style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  padding: "8px 12px",
+                  background: "#fff3cd",
+                  borderBottom: "1px solid #ffc107",
+                  zIndex: 10,
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center"
+                }}>
+                  <Text>
+                    Click a node to set as <strong>${actionParamPickMode.paramNames[actionParamPickMode.currentIndex]}</strong>
+                    {actionParamPickMode.paramNames.length > 1 && (
+                      <span style={{ marginLeft: 8, opacity: 0.7 }}>
+                        ({actionParamPickMode.currentIndex + 1} of {actionParamPickMode.paramNames.length})
+                      </span>
+                    )}
+                  </Text>
+                  <Button size="small" onClick={() => setActionParamPickMode(null)}>Cancel</Button>
+                </div>
+              )}
               <DomNavigator ref={navigatorRef} onSelectedChange={(ids) => {
                 const targetId = ids[0];
                 if (refPickMode && targetId) {
                   const { parentId } = refPickMode;
                   document.addChildren(parentId, [{ kind: "ref", target: targetId }]);
                   setRefPickMode(null);
+                  return;
+                }
+                if (actionParamPickMode && targetId) {
+                  const { actions, paramNames, currentIndex, collectedParams } = actionParamPickMode;
+                  const paramName = paramNames[currentIndex];
+                  if (paramName) {
+                    const newParams = { ...collectedParams, [paramName]: targetId };
+
+                    if (currentIndex + 1 < paramNames.length) {
+                      // More params to select
+                      setActionParamPickMode({
+                        ...actionParamPickMode,
+                        currentIndex: currentIndex + 1,
+                        collectedParams: newParams,
+                      });
+                    } else {
+                      // All params collected → execute replay
+                      replay(actions, newParams);
+                      setActionParamPickMode(null);
+                    }
+                  }
                   return;
                 }
                 setSelectedNodeIds(ids);
@@ -786,24 +867,18 @@ export const App = () => {
                     >
                       <Text weight="semibold" style={{ color: '#0078d4' }}>Button: {pinnedButtonNode.label}</Text>
                     </div>
-                    {pinnedButtonNode.target && (
+                    {Object.keys(pinnedButtonNode.params).length > 0 && (
                       <div style={{ fontSize: '12px', color: '#666' }}>
-                        Target: <NodeId id={pinnedButtonNode.target} onClick={(id) => setSelectedNodeIds([id])} />
+                        Params: {Object.entries(pinnedButtonNode.params).map(([name, id]) => (
+                          <span key={name} style={{ marginRight: 8 }}>
+                            ${name}=<NodeId id={id} onClick={(nodeId) => setSelectedNodeIds([nodeId])} />
+                          </span>
+                        ))}
                       </div>
                     )}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Badge appearance="filled" color="brand">{pinnedButtonNode.actions.length} action{pinnedButtonNode.actions.length !== 1 ? 's' : ''}</Badge>
-                    <Switch
-                      checked={pinnedButtonNode.replayMode === "selected"}
-                      onChange={(_, data) => {
-                        if (pinnedButtonId) {
-                          document.updateNodeProperty(pinnedButtonId, "replayMode", data.checked ? "selected" : "fixed");
-                        }
-                      }}
-                      label={pinnedButtonNode.replayMode === "selected" ? "On selected" : "Fixed target"}
-                      style={{ margin: 0 }}
-                    />
                     <Tooltip content="Close" relationship="label">
                       <ToolbarButton
                         icon={<DismissRegular />}
@@ -822,7 +897,7 @@ export const App = () => {
                       onSelectionChange={() => { }}
                       currentNodeId={selectedNodeId ?? null}
                       mode="view"
-                      actionTarget={pinnedButtonNode.target}
+                      actionParams={pinnedButtonNode.params}
                       onDeleteAction={(index) => {
                         if (pinnedButtonId) {
                           document.deleteAction(pinnedButtonId, index);
@@ -901,17 +976,20 @@ export const App = () => {
             {/* Add to Button Dialog */}
             <Dialog open={showAddToButtonDialog} onOpenChange={(_, data) => {
               setShowAddToButtonDialog(data.open);
-              if (!data.open) setSelectedActionNodeId(null);
+              if (!data.open) {
+                setSelectedActionNodeId(null);
+                setParamConfig({});
+              }
             }}>
-              <DialogSurface>
+              <DialogSurface style={{ maxWidth: 600 }}>
                 <DialogBody>
                   <DialogTitle>Add Actions to Button</DialogTitle>
                   <DialogContent>
                     <Text size={200} style={{ marginBottom: 12, display: 'block' }}>
                       Select a button to add {selectedActionIndices.size} action{selectedActionIndices.size !== 1 ? 's' : ''} to:
                     </Text>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {actionNodes.map(({ id, label, target }) => (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+                      {actionNodes.map(({ id, label, params }) => (
                         <Button
                           key={id}
                           appearance={selectedActionNodeId === id ? 'primary' : 'secondary'}
@@ -919,7 +997,9 @@ export const App = () => {
                           style={{ justifyContent: 'flex-start' }}
                         >
                           <span style={{ fontWeight: 'bold' }}>{label}</span>
-                          <span style={{ marginLeft: 8, opacity: 0.7, fontSize: '0.9em' }}>→ {target}</span>
+                          <span style={{ marginLeft: 8, opacity: 0.7, fontSize: '0.9em' }}>
+                            {Object.entries(params).map(([name, nodeId]) => `$${name}=${nodeId}`).join(", ")}
+                          </span>
                         </Button>
                       ))}
                       {actionNodes.length === 0 && (
@@ -928,6 +1008,58 @@ export const App = () => {
                         </Text>
                       )}
                     </div>
+
+                    {/* Parameter Configuration */}
+                    {extractedIds.length > 0 && (
+                      <>
+                        <Text weight="semibold" size={300} style={{ marginBottom: 8, display: 'block' }}>
+                          Configure Parameters
+                        </Text>
+                        <Text size={200} style={{ marginBottom: 12, display: 'block', color: '#666' }}>
+                          For each referenced node, name it to make it a parameter or mark as fixed:
+                        </Text>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          {extractedIds.map((nodeId) => {
+                            const config = paramConfig[nodeId] || { name: '', fixed: false };
+                            return (
+                              <div key={nodeId} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 8,
+                                padding: '8px',
+                                background: config.fixed ? '#f5f5f5' : '#e8f4e8',
+                                borderRadius: 4,
+                              }}>
+                                <Checkbox
+                                  checked={config.fixed}
+                                  onChange={(_, data) => {
+                                    setParamConfig(prev => ({
+                                      ...prev,
+                                      [nodeId]: { ...config, fixed: !!data.checked }
+                                    }));
+                                  }}
+                                  label="Fixed"
+                                />
+                                <Input
+                                  size="small"
+                                  placeholder="param name"
+                                  value={config.name}
+                                  disabled={config.fixed}
+                                  onChange={(_, data) => {
+                                    setParamConfig(prev => ({
+                                      ...prev,
+                                      [nodeId]: { ...config, name: data.value }
+                                    }));
+                                  }}
+                                  style={{ width: 120 }}
+                                />
+                                <NodeId id={nodeId} onClick={(id) => setSelectedNodeIds([id])} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </DialogContent>
                   <DialogActions>
                     <DialogTrigger disableButtonEnhancement>

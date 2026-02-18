@@ -12,8 +12,8 @@ const el = (tag: string) => ({ kind: "element" as const, tag, attrs: {}, childre
 /** Shorthand for creating value nodes */
 const val = (value: string) => ({ kind: "value" as const, value });
 /** Shorthand for creating action nodes (programmable buttons) */
-const action = (label: string, target: string, actions: GeneralizedPatch[] = [], replayMode?: "fixed" | "selected") =>
-    ({ kind: "action" as const, label, actions, target, ...(replayMode && { replayMode }) });
+const action = (label: string, params: Record<string, string>, actions: GeneralizedPatch[] = []) =>
+    ({ kind: "action" as const, label, actions, params });
 /** Shorthand for creating formula nodes */
 const formula = (operation: string) => ({ kind: "formula" as const, operation });
 /** Shorthand for creating ref nodes */
@@ -32,8 +32,8 @@ const add = (doc: DenicekDocument, parentId: string, child: NodeInput): string =
 
 /** Actions for "Add Conference" button */
 const addConferenceActions: GeneralizedPatch[] = [
-    // Insert new tr element as child of tbody ($0)
-    { type: "tree", action: "create", target: "$1", parent: "$0", index: -1, data: { kind: "element", tag: "tr" } },
+    // Insert new tr element as child of tbody ($target)
+    { type: "tree", action: "create", target: "$1", parent: "$target", index: -1, data: { kind: "element", tag: "tr" } },
     // Insert first td (name)
     { type: "tree", action: "create", target: "$2", parent: "$1", index: -1, data: { kind: "element", tag: "td" } },
     { type: "map", target: "$2", key: "style", value: { padding: 8 } },
@@ -46,14 +46,14 @@ const addConferenceActions: GeneralizedPatch[] = [
 
 /** Actions for "+1" button - add value and RPN add formula as siblings in counter display */
 const incrementActions: GeneralizedPatch[] = [
-    { type: "tree", action: "create", target: "$1", parent: "$0", index: -1, data: { kind: "value", value: "1" } },
-    { type: "tree", action: "create", target: "$2", parent: "$0", index: -1, data: { kind: "formula", operation: "add" } },
+    { type: "tree", action: "create", target: "$1", parent: "$target", index: -1, data: { kind: "value", value: "1" } },
+    { type: "tree", action: "create", target: "$2", parent: "$target", index: -1, data: { kind: "formula", operation: "add" } },
 ];
 
 /** Actions for "-1" button - add value "-1" and RPN add formula as siblings in counter display */
 const decrementActions: GeneralizedPatch[] = [
-    { type: "tree", action: "create", target: "$1", parent: "$0", index: -1, data: { kind: "value", value: "-1" } },
-    { type: "tree", action: "create", target: "$2", parent: "$0", index: -1, data: { kind: "formula", operation: "add" } },
+    { type: "tree", action: "create", target: "$1", parent: "$target", index: -1, data: { kind: "value", value: "-1" } },
+    { type: "tree", action: "create", target: "$2", parent: "$target", index: -1, data: { kind: "formula", operation: "add" } },
 ];
 
 /**
@@ -103,8 +103,8 @@ function createFormativeExamples(doc: DenicekDocument, rootId: string): void {
 
     // +1/-1 buttons target the counter display container (not a formula node)
     doc.addChildren(counterButtonsId, [
-        action("+1", counterDisplayId, incrementActions),
-        action("-1", counterDisplayId, decrementActions),
+        action("+1", { target: counterDisplayId }, incrementActions),
+        action("-1", { target: counterDisplayId }, decrementActions),
     ]);
 
     // =========================================================================
@@ -151,7 +151,7 @@ function createFormativeExamples(doc: DenicekDocument, rootId: string): void {
         { type: "tree", action: "create", target: "$2", parent: "$1", index: 0, sourceId: todoInputValueId },
     ];
 
-    add(doc, todoButtonsId, action("Add Item", todoListId, addTodoWithInputActions));
+    add(doc, todoButtonsId, action("Add Item", { target: todoListId }, addTodoWithInputActions));
 
     // =========================================================================
     // Example 3: Hello World (Bulk Transformation)
@@ -271,7 +271,7 @@ function createFormativeExamples(doc: DenicekDocument, rootId: string): void {
     // Action buttons
     const confButtonsId = add(doc, confArticleId, el("div"));
     doc.updateAttribute([confButtonsId], "style", { marginTop: 12, display: 'flex', gap: 8 });
-    add(doc, confButtonsId, action("Add Conference", tbodyId, addConferenceActions));
+    add(doc, confButtonsId, action("Add Conference", { target: tbodyId }, addConferenceActions));
 
     // =========================================================================
     // Example 6: Formula Showcase

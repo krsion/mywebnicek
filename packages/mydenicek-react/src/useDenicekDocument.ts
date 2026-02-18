@@ -85,7 +85,7 @@ export function useRecording() {
     }, [document, version]);
 
     return {
-        replay: (script: GeneralizedPatch[], startNodeId: string) => document.replay(script, startNodeId),
+        replay: (script: GeneralizedPatch[], params: Record<string, string>) => document.replay(script, params),
         history: historyData,
         clearHistory: () => {
             document.clearHistory();

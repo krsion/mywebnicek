@@ -322,7 +322,7 @@ describe("DenicekDocument mutations", () => {
             }
 
             // Replay the copy script - should create another copy with "updated"
-            doc.replay(copyScript, containerId!);
+            doc.replay(copyScript, { "0": containerId! });
 
             // Now we should have one more child
             const snapshotAfterReplay = doc.getSnapshot();
