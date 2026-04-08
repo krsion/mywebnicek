@@ -106,6 +106,14 @@ export class DenicekDocument {
         this.mut(); return ids;
     }
 
+    /** Add a child with an explicit field name (for document initialization). */
+    addNamedChild(parentId: string, name: string, child: NodeInput): string {
+        const pp = this.rp(parentId);
+        this.dk.add(pp, name, this.mkRec(child, name) as unknown as PlainNode);
+        this.mut();
+        return name;
+    }
+
     deleteNodes(nodeIds: string[]): void {
         for (const id of nodeIds) {
             const pid = this.pi.get(id);

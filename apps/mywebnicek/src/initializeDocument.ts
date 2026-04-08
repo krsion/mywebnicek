@@ -15,7 +15,12 @@ const val = (value: string) => ({ kind: "value" as const, value });
 const action = (label: string, params: Record<string, string>, actions: GeneralizedPatch[] = []) =>
     ({ kind: "action" as const, label, actions, params });
 
-/** Add a single child and return its ID (throws if creation fails) */
+/** Add a child with an explicit field name */
+const addNamed = (doc: DenicekDocument, parentId: string, name: string, child: NodeInput): string => {
+    return doc.addNamedChild(parentId, name, child);
+};
+
+/** Add a single child (field name derived from tag/kind) and return its ID */
 const add = (doc: DenicekDocument, parentId: string, child: NodeInput): string => {
     const [id] = doc.addChildren(parentId, [child]);
     if (!id) throw new Error("Failed to create node");
@@ -60,59 +65,59 @@ export function initializeDocument(doc: DenicekDocument): void {
     const rootId = doc.createRootNode("section");
 
     // Header
-    const headerId = add(doc, rootId, el("header"));
-    const h1Id = add(doc, headerId, el("h1"));
-    add(doc, h1Id, val("MyDenicek"));
-    const subtitleId = add(doc, headerId, el("p"));
+    const headerId = addNamed(doc, rootId, "header", el("header"));
+    const titleId = addNamed(doc, headerId, "title", el("h1"));
+    add(doc, titleId, val("MyDenicek"));
+    const subtitleId = addNamed(doc, headerId, "subtitle", el("p"));
     add(doc, subtitleId, val("A local-first collaborative document editor"));
 
-    // Main content
-    const mainId = add(doc, rootId, el("main"));
+    // Examples
+    const examplesId = addNamed(doc, rootId, "examples", el("main"));
 
-    // Example 1: Simple counter with formulas
-    const counterSection = add(doc, mainId, el("article"));
-    const counterTitle = add(doc, counterSection, el("h2"));
-    add(doc, counterTitle, val("Counter"));
-    const counterDesc = add(doc, counterSection, el("p"));
-    add(doc, counterDesc, val("Click the buttons to increment/decrement. Uses formula nodes."));
-    const counterDisplayId = add(doc, counterSection, el("div"));
+    // Example 1: Counter
+    const counterId = addNamed(doc, examplesId, "counter", el("article"));
+    const counterTitleId = addNamed(doc, counterId, "title", el("h2"));
+    add(doc, counterTitleId, val("Counter"));
+    const counterDescId = addNamed(doc, counterId, "description", el("p"));
+    add(doc, counterDescId, val("Click the buttons to increment/decrement. Uses formula nodes."));
+    const counterDisplayId = addNamed(doc, counterId, "display", el("div"));
     add(doc, counterDisplayId, val("0"));
-    const buttonsId = add(doc, counterSection, el("div"));
-    doc.addChildren(buttonsId, [
+    const counterButtonsId = addNamed(doc, counterId, "buttons", el("div"));
+    doc.addChildren(counterButtonsId, [
         action("+1", { target: counterDisplayId }, incrementActions),
         action("-1", { target: counterDisplayId }, decrementActions),
     ]);
 
     // Example 2: Todo list
-    const todoSection = add(doc, mainId, el("article"));
-    const todoTitle = add(doc, todoSection, el("h2"));
-    add(doc, todoTitle, val("Todo List"));
-    const todoListId = add(doc, todoSection, el("ul"));
-    const todo1 = add(doc, todoListId, el("li"));
-    add(doc, todo1, val("Try editing this text"));
-    const todo2 = add(doc, todoListId, el("li"));
-    add(doc, todo2, val("Add new items with the toolbar"));
-    const todo3 = add(doc, todoListId, el("li"));
-    add(doc, todo3, val("Delete items by selecting and pressing Delete"));
+    const todoId = addNamed(doc, examplesId, "todoList", el("article"));
+    const todoTitleId = addNamed(doc, todoId, "title", el("h2"));
+    add(doc, todoTitleId, val("Todo List"));
+    const todoItemsId = addNamed(doc, todoId, "items", el("ul"));
+    const item1 = addNamed(doc, todoItemsId, "item1", el("li"));
+    add(doc, item1, val("Try editing this text"));
+    const item2 = addNamed(doc, todoItemsId, "item2", el("li"));
+    add(doc, item2, val("Add new items with the toolbar"));
+    const item3 = addNamed(doc, todoItemsId, "item3", el("li"));
+    add(doc, item3, val("Delete items by selecting and pressing Delete"));
 
     // Example 3: Conference table
-    const confSection = add(doc, mainId, el("article"));
-    const confTitle = add(doc, confSection, el("h2"));
-    add(doc, confTitle, val("Conferences"));
-    const tableId = add(doc, confSection, el("table"));
-    const theadId = add(doc, tableId, el("thead"));
-    const headerRow = add(doc, theadId, el("tr"));
-    const th1 = add(doc, headerRow, el("th"));
-    add(doc, th1, val("Name"));
-    const th2 = add(doc, headerRow, el("th"));
-    add(doc, th2, val("Location"));
-    const tbodyId = add(doc, tableId, el("tbody"));
-    const row1 = add(doc, tbodyId, el("tr"));
-    const td1 = add(doc, row1, el("td"));
-    add(doc, td1, val("ECOOP 2025"));
-    const td2 = add(doc, row1, el("td"));
-    add(doc, td2, val("Bergen"));
-    doc.addChildren(confSection, [
+    const confId = addNamed(doc, examplesId, "conferences", el("article"));
+    const confTitleId = addNamed(doc, confId, "title", el("h2"));
+    add(doc, confTitleId, val("Conferences"));
+    const tableId = addNamed(doc, confId, "table", el("table"));
+    const theadId = addNamed(doc, tableId, "head", el("thead"));
+    const headerRowId = addNamed(doc, theadId, "row", el("tr"));
+    const nameColId = addNamed(doc, headerRowId, "name", el("th"));
+    add(doc, nameColId, val("Name"));
+    const locColId = addNamed(doc, headerRowId, "location", el("th"));
+    add(doc, locColId, val("Location"));
+    const tbodyId = addNamed(doc, tableId, "body", el("tbody"));
+    const ecoop = addNamed(doc, tbodyId, "ecoop", el("tr"));
+    const ecoopName = addNamed(doc, ecoop, "name", el("td"));
+    add(doc, ecoopName, val("ECOOP 2025"));
+    const ecoopLoc = addNamed(doc, ecoop, "location", el("td"));
+    add(doc, ecoopLoc, val("Bergen"));
+    doc.addChildren(confId, [
         action("Add Conference", { target: tbodyId }, addConferenceActions),
     ]);
 
