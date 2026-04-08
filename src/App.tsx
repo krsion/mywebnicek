@@ -17,7 +17,9 @@ export function App() {
 
   // Initialize with sample document on first load
   useEffect(() => {
-    if (!isRec(dk.doc) || !("root" in dk.doc)) {
+    // Check fresh materialized tree (not stale dk.doc from render)
+    const tree = dk.denicek.materialize();
+    if (!isRec(tree) || !("root" in tree)) {
       initializeDocument(dk.denicek);
       dk.forceUpdate();
     }

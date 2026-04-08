@@ -1,0 +1,58 @@
+{
+  "hash": "a47f52ac",
+  "configHash": "288283c0",
+  "lockfileHash": "e3b0c442",
+  "browserHash": "d64f0d98",
+  "optimized": {
+    "react": {
+      "src": "../../node_modules/.deno/react@19.2.4/node_modules/react/index.js",
+      "file": "react.js",
+      "fileHash": "668c1684",
+      "needsInterop": true
+    },
+    "react-dom": {
+      "src": "../../node_modules/.deno/react-dom@19.2.4/node_modules/react-dom/index.js",
+      "file": "react-dom.js",
+      "fileHash": "529acefc",
+      "needsInterop": true
+    },
+    "react/jsx-dev-runtime": {
+      "src": "../../node_modules/.deno/react@19.2.4/node_modules/react/jsx-dev-runtime.js",
+      "file": "react_jsx-dev-runtime.js",
+      "fileHash": "964c83f6",
+      "needsInterop": true
+    },
+    "react/jsx-runtime": {
+      "src": "../../node_modules/.deno/react@19.2.4/node_modules/react/jsx-runtime.js",
+      "file": "react_jsx-runtime.js",
+      "fileHash": "080eeea6",
+      "needsInterop": true
+    },
+    "@fluentui/react-components": {
+      "src": "../../node_modules/.deno/@fluentui+react-components@9.73.7/node_modules/@fluentui/react-components/lib/index.js",
+      "file": "@fluentui_react-components.js",
+      "fileHash": "76fe071c",
+      "needsInterop": false
+    },
+    "react-dom/client": {
+      "src": "../../node_modules/.deno/react-dom@19.2.4/node_modules/react-dom/client.js",
+      "file": "react-dom_client.js",
+      "fileHash": "afe09cb3",
+      "needsInterop": true
+    }
+  },
+  "chunks": {
+    "chunk-FGJB3CPL": {
+      "file": "chunk-FGJB3CPL.js"
+    },
+    "chunk-MQPPG2PR": {
+      "file": "chunk-MQPPG2PR.js"
+    },
+    "chunk-3VQSL3NC": {
+      "file": "chunk-3VQSL3NC.js"
+    },
+    "chunk-FW76FCOS": {
+      "file": "chunk-FW76FCOS.js"
+    }
+  }
+}
