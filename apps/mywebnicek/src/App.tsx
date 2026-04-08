@@ -30,7 +30,6 @@ export const App = () => {
   const { document, version } = useDocumentState();
   const { connect, status, latency, error } = useConnectivity();
   const [roomId] = useState<string>(() => getRoomIdFromHash());
-  const [showRender, setShowRender] = useState(false);
 
   // Get peer ID from document
   const peerId = useMemo(() => document.getPeerId(), [document]);
@@ -112,15 +111,6 @@ export const App = () => {
   // Get the Denicek CRDT instance
   const denicek = useMemo(() => document.denicekInstance, [document]);
 
-  // Listen for render toggle from CommandBar
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      setShowRender(!!window.document.querySelector("[data-show-render]"));
-    });
-    observer.observe(window.document.body, { childList: true, subtree: true, attributes: true });
-    return () => observer.disconnect();
-  }, []);
-
   return (
     <PeerAliasProvider selfPeerId={peerId} knownPeerIds={[]} peerNames={peerNames}>
       <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
@@ -140,27 +130,22 @@ export const App = () => {
           </span>
         </div>
 
-        {/* Command bar */}
-        <div style={{ flex: 1, minHeight: 0 }}>
-          <ErrorBoundary>
-            <CommandBar denicek={denicek} version={version} />
-          </ErrorBoundary>
-        </div>
+        {/* Main content: command bar left, rendered doc right */}
+        <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+          {/* Command bar — left panel */}
+          <div style={{ width: "50%", minWidth: 400, display: "flex", flexDirection: "column", borderRight: "2px solid #333" }}>
+            <ErrorBoundary>
+              <CommandBar denicek={denicek} version={version} />
+            </ErrorBoundary>
+          </div>
 
-        {/* Rendered document (toggled via 'render' command) */}
-        {showRender && (
-          <div style={{
-            flex: 1,
-            minHeight: 0,
-            overflow: "auto",
-            borderTop: "2px solid #333",
-            background: "#fff",
-          }}>
+          {/* Rendered document — right panel */}
+          <div style={{ flex: 1, overflow: "auto", background: "#fff", padding: 16 }}>
             <ErrorBoundary>
               <RenderedDocument document={document} />
             </ErrorBoundary>
           </div>
-        )}
+        </div>
       </div>
     </PeerAliasProvider>
   );
