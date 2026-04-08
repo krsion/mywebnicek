@@ -142,12 +142,12 @@ function parseValue(raw: string): PlainNode {
 const COMMANDS = [
   "add", "delete", "rename", "set", "pushBack", "pushFront",
   "popBack", "popFront", "updateTag", "wrapRecord", "wrapList",
-  "copy", "undo", "redo", "get", "tree", "help", "render",
+  "copy", "undo", "redo", "get", "tree", "help",
 ];
 
-const HELP_TEXT = `Available commands:
+const HELP_TEXT = `Commands:
   add <selector> <field> <value|json>   Add a field to matched records
-  delete <selector> <field>             Delete a field from matched records
+  delete <selector> <field>             Delete a field
   rename <selector> <old> <new>         Rename a field
   set <selector> <value>                Set a primitive value
   pushBack <selector> <value|json>      Append to a list
@@ -155,14 +155,12 @@ const HELP_TEXT = `Available commands:
   popBack <selector>                    Remove last list item
   popFront <selector>                   Remove first list item
   updateTag <selector> <tag>            Update structural tag
-  wrapRecord <selector> <field> <tag>   Wrap nodes in a record
-  wrapList <selector> <tag>             Wrap nodes in a list
-  copy <target> <source>                Copy source nodes into target
-  undo                                  Undo last edit
-  redo                                  Redo last undo
+  wrapRecord <selector> <field> <tag>   Wrap in a record
+  wrapList <selector> <tag>             Wrap in a list
+  copy <target> <source>                Copy nodes
+  undo / redo                           Undo or redo
   get <selector>                        Show nodes at selector
   tree [selector]                       Show document tree
-  render                                Toggle rendered document
   help                                  Show this help`;
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -173,7 +171,6 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [output, setOutput] = useState<OutputMessage[]>([]);
   const [ghostText, setGhostText] = useState("");
-  const [showRender, setShowRender] = useState(false);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
@@ -195,7 +192,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [denicek, version]);
 
-  // Rendered tree text
+  // Tree text for `tree` command
   const treeText = useMemo(() => {
     if (!tree) return "(empty document)";
     const lines: string[] = [];
@@ -310,11 +307,6 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
       switch (command) {
         case "help":
           pushOutput({ text: HELP_TEXT, kind: "info" });
-          break;
-
-        case "render":
-          setShowRender(prev => !prev);
-          pushOutput({ text: showRender ? "Rendered document hidden" : "Rendered document shown", kind: "success" });
           break;
 
         case "undo": {
@@ -473,7 +465,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     } catch (err) {
       pushOutput({ text: String(err instanceof Error ? err.message : err), kind: "error" });
     }
-  }, [denicek, pushOutput, treeText, showRender]);
+  }, [denicek, pushOutput, treeText]);
 
   // ── Key handlers ───────────────────────────────────────────────────────
 
@@ -526,16 +518,18 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
   return (
     <div style={styles.container} onClick={() => inputRef.current?.focus()}>
-      {/* Output area */}
-      <div ref={outputRef} style={styles.outputArea}>
-        {output.map((msg, i) => (
-          <pre key={i} style={{ ...styles.outputLine, color: msgColor(msg.kind) }}>
-            {msg.text}
-          </pre>
-        ))}
-      </div>
+      {/* Output from last command */}
+      {output.length > 0 && (
+        <div ref={outputRef} style={styles.outputArea}>
+          {output.slice(-5).map((msg, i) => (
+            <pre key={i} style={{ ...styles.outputLine, color: msgColor(msg.kind) }}>
+              {msg.text}
+            </pre>
+          ))}
+        </div>
+      )}
 
-      {/* Input area */}
+      {/* Input with ghost completion */}
       <div style={styles.inputRow}>
         <span style={styles.prompt}>{">"}</span>
         <div style={styles.inputWrapper}>
@@ -547,6 +541,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
             style={styles.input}
             spellCheck={false}
             autoComplete="off"
+            placeholder="Type a command (tab to complete, help for list)"
           />
           {ghostText && (
             <span style={styles.ghost}>
@@ -555,22 +550,9 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
           )}
         </div>
       </div>
-
-      {/* Live tree */}
-      <div style={styles.treeArea}>
-        <pre style={styles.treePre}>{treeText}</pre>
-      </div>
-
-      {/* Hidden flag for parent to read */}
-      {showRender && <div data-show-render="true" style={{ display: "none" }} />}
     </div>
   );
 }
-
-/** Expose the render toggle state via a hook-friendly pattern. */
-CommandBar.useShowRender = function useShowRender(): boolean {
-  return !!document.querySelector("[data-show-render]");
-};
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -613,7 +595,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#d4d4d4",
     fontFamily: FONT,
     fontSize: 13,
-    cursor: "text",
+    justifyContent: "flex-end",
   },
   outputArea: {
     flex: "0 1 auto",
@@ -671,19 +653,5 @@ const styles: Record<string, React.CSSProperties> = {
     pointerEvents: "none",
     whiteSpace: "pre",
     zIndex: 0,
-  },
-  treeArea: {
-    flex: 1,
-    overflowY: "auto",
-    padding: "8px 12px",
-    minHeight: 0,
-  },
-  treePre: {
-    margin: 0,
-    fontFamily: FONT,
-    fontSize: 12,
-    lineHeight: 1.35,
-    color: "#9cdcfe",
-    whiteSpace: "pre",
   },
 };

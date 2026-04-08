@@ -132,8 +132,8 @@ export const App = () => {
 
         {/* Main content: command bar left, rendered doc right */}
         <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-          {/* Command bar — left panel */}
-          <div style={{ width: "50%", minWidth: 400, display: "flex", flexDirection: "column", borderRight: "2px solid #333" }}>
+          {/* Command bar — left panel, compact */}
+          <div style={{ width: 360, flexShrink: 0, display: "flex", flexDirection: "column", borderRight: "2px solid #333" }}>
             <ErrorBoundary>
               <CommandBar denicek={denicek} version={version} />
             </ErrorBoundary>
