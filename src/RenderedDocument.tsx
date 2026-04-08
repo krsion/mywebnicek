@@ -1,83 +1,81 @@
-import type { PlainNode, PlainRecord } from "@mydenicek/core";
+import type { PlainList, PlainNode, PlainRecord, PlainRef } from "@mydenicek/core";
 import React from "react";
 
 function isRec(v: PlainNode): v is PlainRecord {
     return typeof v === "object" && v !== null && "$tag" in v && !("$items" in v) && !("$ref" in v);
 }
+function isList(v: PlainNode): v is PlainList {
+    return typeof v === "object" && v !== null && "$tag" in v && "$items" in v;
+}
+function isRef(v: PlainNode): v is PlainRef {
+    return typeof v === "object" && v !== null && "$ref" in v;
+}
 
 const META = new Set(["$tag", "$id", "$kind"]);
-const safeTags = new Set(["div", "span", "p", "h1", "h2", "h3", "h4", "h5", "h6",
-    "ul", "ol", "li", "table", "thead", "tbody", "tr", "th", "td",
-    "header", "main", "section", "article", "nav", "footer",
-    "strong", "em", "a", "img", "br", "hr", "pre", "code",
-    "button", "input", "label", "form", "blockquote"]);
-
-const nameLabel: React.CSSProperties = {
-    display: "inline-block",
-    fontSize: 10,
-    fontFamily: "Consolas, monospace",
-    color: "#8a8a8a",
-    background: "#f0f0f0",
-    borderRadius: 3,
-    padding: "0 4px",
-    marginRight: 4,
-    verticalAlign: "middle",
-    lineHeight: "16px",
-};
 
 interface Props {
     doc: PlainNode;
 }
 
 export function RenderedDocument({ doc }: Props) {
-    if (!isRec(doc)) return <div style={{ color: "#888", padding: 20 }}>Empty document</div>;
+    if (!isRec(doc)) return <div style={styles.empty}>Empty document</div>;
     const root = doc["root"];
-    if (!root || !isRec(root)) return <div style={{ color: "#888", padding: 20 }}>No root node</div>;
-    return <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}>{renderNode(root, "")}</div>;
+    if (!root) return <div style={styles.empty}>No root node</div>;
+    return <div style={styles.root}><Node node={root} name="/" depth={0} /></div>;
 }
 
-function renderNode(node: PlainNode, fieldName: string): React.ReactNode {
-    if (typeof node === "string") return node;
-    if (typeof node === "number" || typeof node === "boolean") return String(node);
-    if (!isRec(node)) return null;
-
-    const tag = String(node.$tag);
-    const kind = node.$kind as string | undefined;
-
-    // Support both $kind-based (legacy data) and $tag-based (simplified) detection
-    if (kind === "value" || tag === "$value") {
-        return <>{String(node.value ?? "")}</>;
+function Node({ node, name, depth }: { node: PlainNode; name: string; depth: number }): React.ReactElement {
+    if (typeof node === "string" || typeof node === "number" || typeof node === "boolean") {
+        return <div style={{ ...styles.leaf, marginLeft: depth * 16 }}>
+            <span style={styles.name}>{name}</span>
+            <span style={styles.primitive}>{JSON.stringify(node)}</span>
+        </div>;
     }
-    if (kind === "formula" || tag === "$formula") {
-        return <code style={{ background: "#e8f4e8", padding: "2px 6px", borderRadius: 4, fontSize: "0.9em" }}>
-            ƒ({String(node.operation)})
-        </code>;
+    if (isRef(node)) {
+        return <div style={{ ...styles.leaf, marginLeft: depth * 16 }}>
+            <span style={styles.name}>{name}</span>
+            <span style={styles.ref}>→ {node.$ref}</span>
+        </div>;
     }
-    if (kind === "ref" || tag === "$ref") {
-        return <span style={{ color: "#0078d4", textDecoration: "underline" }}>→ {String(node.target)}</span>;
+    if (isList(node)) {
+        return <div style={{ marginLeft: depth * 16 }}>
+            <div style={styles.header}>
+                <span style={styles.name}>{name}</span>
+                <span style={styles.tag}>[{node.$tag}]</span>
+                <span style={styles.count}>{node.$items.length}</span>
+            </div>
+            {node.$items.map((item, i) =>
+                <Node key={i} node={item} name={String(i)} depth={depth + 1} />
+            )}
+        </div>;
     }
-    if (kind === "action" || tag === "$action") {
-        return <button type="button" style={{ padding: "4px 12px", cursor: "pointer", margin: "2px" }}>
-            {String(node.label ?? "Action")}
-        </button>;
-    }
-
-    // Element node — render with field name label
-    const children: React.ReactNode[] = [];
-    for (const [key, val] of Object.entries(node)) {
-        if (META.has(key) || val === undefined) continue;
-        if (isRec(val)) {
-            children.push(<React.Fragment key={key}>{renderNode(val, key)}</React.Fragment>);
+    if (isRec(node)) {
+        const tag = String(node.$tag);
+        const children: [string, PlainNode][] = [];
+        for (const [key, val] of Object.entries(node)) {
+            if (!META.has(key) && val !== undefined) children.push([key, val as PlainNode]);
         }
+        return <div style={{ marginLeft: depth * 16 }}>
+            <div style={styles.header}>
+                <span style={styles.name}>{name}</span>
+                <span style={styles.tag}>&lt;{tag}&gt;</span>
+            </div>
+            {children.map(([key, val]) =>
+                <Node key={key} node={val} name={key} depth={depth + 1} />
+            )}
+        </div>;
     }
-
-    const htmlTag = safeTags.has(tag) ? tag : "div";
-
-    // Don't inject <span> labels inside elements that have strict HTML nesting rules
-    const noLabelTags = new Set(["table", "thead", "tbody", "tfoot", "tr", "colgroup"]);
-    const label = fieldName && !noLabelTags.has(htmlTag)
-        ? <span style={nameLabel}>{fieldName}</span>
-        : null;
-
-    return React.createElement(htmlTag, {}, label, ...children);
+    return <div style={{ marginLeft: depth * 16, color: "#999" }}>{name}: (unknown)</div>;
 }
+
+const styles: Record<string, React.CSSProperties> = {
+    root: { fontFamily: "Consolas, Monaco, monospace", fontSize: 13, lineHeight: 1.6, padding: 8 },
+    empty: { color: "#888", padding: 20, fontFamily: "system-ui" },
+    header: { display: "flex", gap: 6, alignItems: "baseline" },
+    leaf: { display: "flex", gap: 6, alignItems: "baseline" },
+    name: { color: "#0078d4", fontWeight: 600 },
+    tag: { color: "#888", fontSize: 12 },
+    count: { color: "#888", fontSize: 11 },
+    primitive: { color: "#b5533c" },
+    ref: { color: "#6f42c1", fontStyle: "italic" },
+};
