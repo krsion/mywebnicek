@@ -52,51 +52,14 @@ export const App = () => {
   }, []);
 
   const hasInitialized = useRef(false);
-  const hadHashRoomId = useRef(!!window.location.hash.slice(1));
 
+  // Initialize document on mount
   useEffect(() => {
-    if (hasInitialized.current) return undefined;
-
-    const existingRoot = document.getRootId();
-    if (existingRoot) {
-      hasInitialized.current = true;
-      return undefined;
-    }
-
-    if (!hadHashRoomId.current) {
-      hasInitialized.current = true;
+    if (hasInitialized.current) return;
+    hasInitialized.current = true;
+    if (!document.getRootId()) {
       initializeDocument(document);
-      return undefined;
     }
-
-    const checkAndMaybeInit = () => {
-      if (hasInitialized.current) return;
-      const rootId = document.getRootId();
-      if (rootId) {
-        hasInitialized.current = true;
-        unsubscribe();
-        clearTimeout(initTimeout);
-      }
-    };
-
-    const unsubscribe = document.subscribe(() => checkAndMaybeInit());
-
-    const initTimeout = setTimeout(() => {
-      if (hasInitialized.current) return;
-      const rootId = document.getRootId();
-      if (!rootId) {
-        hasInitialized.current = true;
-        initializeDocument(document);
-      } else {
-        hasInitialized.current = true;
-      }
-      unsubscribe();
-    }, 1000);
-
-    return () => {
-      unsubscribe();
-      clearTimeout(initTimeout);
-    };
   }, [document]);
 
   const denicek = useMemo(() => document.denicekInstance, [document]);
