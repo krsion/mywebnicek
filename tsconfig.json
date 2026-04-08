@@ -2,18 +2,6 @@
     "files": [],
     "references": [
         {
-            "path": "./packages/mydenicek-core"
-        },
-        {
-            "path": "./packages/mydenicek-react"
-        },
-        {
-            "path": "./packages/mydenicek-mcp"
-        },
-        {
-            "path": "./packages/mydenicek-integration-tests"
-        },
-        {
             "path": "./apps/mywebnicek"
         },
         {

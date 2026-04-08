@@ -1,5 +1,4 @@
 import { Button, Card, CardHeader, Text, Title3 } from "@fluentui/react-components";
-import { ErrorCircleRegular } from "@fluentui/react-icons";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface Props {
@@ -52,7 +51,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 }}>
                     <Card style={{ maxWidth: 500, padding: 20 }}>
                         <CardHeader
-                            image={<ErrorCircleRegular style={{ color: "#d13438", fontSize: 32 }} />}
+                            image={<span style={{ color: "#d13438", fontSize: 32 }}>⚠</span>}
                             header={<Title3>Something went wrong</Title3>}
                         />
                         <div style={{ marginTop: 12, marginBottom: 16 }}>

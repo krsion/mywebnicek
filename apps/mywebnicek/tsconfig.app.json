@@ -10,15 +10,7 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    "noUncheckedSideEffectImports": true,
-    "paths": {
-      "@mydenicek/document": [
-        "../../packages/mydenicek-core/src/index.ts"
-      ],
-      "@mydenicek/react": [
-        "../../packages/mydenicek-react/src/index.ts"
-      ]
-    }
+    "noUncheckedSideEffectImports": true
   },
   "include": [
     "src"

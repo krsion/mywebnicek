@@ -1,6 +1,5 @@
 import type { PlainNode, PlainRecord } from "@jsr/mydenicek__core";
-import type { DenicekDocument } from "@mydenicek/document";
-import React, { useEffect, useReducer } from "react";
+import React from "react";
 
 function isRec(v: PlainNode): v is PlainRecord {
     return typeof v === "object" && v !== null && "$tag" in v && !("$items" in v) && !("$ref" in v);
@@ -27,23 +26,12 @@ const nameLabel: React.CSSProperties = {
 };
 
 interface Props {
-    document: DenicekDocument;
+    doc: PlainNode;
 }
 
-export function RenderedDocument({ document }: Props) {
-    const [tick, forceUpdate] = useReducer((x: number) => x + 1, 0);
-    useEffect(() => {
-        const unsub = document.subscribe(() => forceUpdate());
-        forceUpdate();
-        return unsub;
-    }, [document]);
-
-    void tick;
-    let tree: PlainNode;
-    try { tree = document.denicekInstance.materialize(); }
-    catch { return <div style={{ color: "#888", padding: 20 }}>Error materializing document</div>; }
-    if (!isRec(tree)) return <div style={{ color: "#888", padding: 20 }}>Empty document</div>;
-    const root = tree["root"];
+export function RenderedDocument({ doc }: Props) {
+    if (!isRec(doc)) return <div style={{ color: "#888", padding: 20 }}>Empty document</div>;
+    const root = doc["root"];
     if (!root || !isRec(root)) return <div style={{ color: "#888", padding: 20 }}>No root node</div>;
     return <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}>{renderNode(root, "")}</div>;
 }
@@ -56,18 +44,19 @@ function renderNode(node: PlainNode, fieldName: string): React.ReactNode {
     const tag = String(node.$tag);
     const kind = node.$kind as string | undefined;
 
-    if (kind === "value") {
+    // Support both $kind-based (legacy data) and $tag-based (simplified) detection
+    if (kind === "value" || tag === "$value") {
         return <>{String(node.value ?? "")}</>;
     }
-    if (kind === "formula") {
+    if (kind === "formula" || tag === "$formula") {
         return <code style={{ background: "#e8f4e8", padding: "2px 6px", borderRadius: 4, fontSize: "0.9em" }}>
             ƒ({String(node.operation)})
         </code>;
     }
-    if (kind === "ref") {
+    if (kind === "ref" || tag === "$ref") {
         return <span style={{ color: "#0078d4", textDecoration: "underline" }}>→ {String(node.target)}</span>;
     }
-    if (kind === "action") {
+    if (kind === "action" || tag === "$action") {
         return <button style={{ padding: "4px 12px", cursor: "pointer", margin: "2px" }}>
             {String(node.label ?? "Action")}
         </button>;
@@ -77,9 +66,7 @@ function renderNode(node: PlainNode, fieldName: string): React.ReactNode {
     const children: React.ReactNode[] = [];
     for (const [key, val] of Object.entries(node)) {
         if (META.has(key) || val === undefined) continue;
-        if (isRec(val)) {
-            children.push(<React.Fragment key={key}>{renderNode(val, key)}</React.Fragment>);
-        }
+        children.push(<React.Fragment key={key}>{renderNode(val, key)}</React.Fragment>);
     }
 
     const htmlTag = safeTags.has(tag) ? tag : "div";
