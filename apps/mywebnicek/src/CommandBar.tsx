@@ -172,6 +172,20 @@ const COMMANDS = [
   "copy", "undo", "redo", "get", "tree", "help",
 ];
 
+// Ghost hints: command → [arg after selector, ...]
+const ARG_HINTS: Record<string, string[]> = {
+  add: ["<field>", "<value>"],
+  delete: ["<field>"],
+  rename: ["<old>", "<new>"],
+  set: ["<value>"],
+  pushBack: ["<value>"],
+  pushFront: ["<value>"],
+  updateTag: ["<tag>"],
+  wrapRecord: ["<field>", "<tag>"],
+  wrapList: ["<tag>"],
+  copy: ["<source-selector>"],
+};
+
 const HELP_TEXT = `Commands:
   add <selector> <field> <value|json>   Add a field to matched records
   delete <selector> <field>             Delete a field
@@ -289,7 +303,20 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
       setGhostText("");
     } else {
       setCompletions([]);
-      setGhostText("");
+      // Show argument hints when path is done but more args are needed
+      const cmd = parts[0] ?? "";
+      const hints = ARG_HINTS[cmd];
+      if (hints && parts.length >= 2) {
+        // How many args after the selector have been typed?
+        const extraArgs = parts.length - 2; // parts[0]=cmd, parts[1]=selector, rest=args
+        if (extraArgs < hints.length) {
+          setGhostText(" " + hints.slice(extraArgs).join(" "));
+        } else {
+          setGhostText("");
+        }
+      } else {
+        setGhostText("");
+      }
     }
   }, [getPathCompletions]);
 
