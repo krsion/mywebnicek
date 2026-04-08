@@ -113,9 +113,11 @@ function navigateTo(root: PlainNode, segments: string[]): PlainNode | undefined 
   return current;
 }
 
+const META_KEYS = new Set(["$tag", "$id", "$kind", "$order"]);
+
 function getChildKeys(node: PlainNode): string[] {
   if (isPlainRecord(node)) {
-    return Object.keys(node).filter(k => k !== "$tag");
+    return Object.keys(node).filter(k => !META_KEYS.has(k) && isPlainRecord(node[k]!));
   }
   if (isPlainList(node)) {
     return node.$items.map((_, i) => String(i));
@@ -186,11 +188,13 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [denicek, version]);
 
-  // Tree text for `tree` command
+  // Tree text for `tree` command — start from the user root, skip CRDT wrapper
   const treeText = useMemo(() => {
-    if (!tree) return "(empty document)";
+    if (!tree || !isPlainRecord(tree)) return "(empty document)";
+    const userRoot = tree["root"];
+    if (!userRoot || !isPlainRecord(userRoot)) return "(no root node)";
     const lines: string[] = [];
-    renderTree(tree, "root", 0, lines);
+    renderTree(userRoot, "/", 0, lines);
     return lines.join("\n");
   }, [tree]);
 
@@ -200,28 +204,28 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
   const getPathCompletions = useCallback((text: string): { items: string[]; prefix: string } => {
     const parts = text.split(/\s+/);
     if (parts.length <= 1) {
-      // Complete command name
       const partial = parts[0] ?? "";
       return { items: COMMANDS.filter(c => c.startsWith(partial) && c !== partial), prefix: "" };
     }
     const selectorArg = parts[1] ?? "";
-    if (!tree) return { items: [], prefix: "" };
+    if (!tree || !isPlainRecord(tree)) return { items: [], prefix: "" };
 
-    const segments = selectorArg.split("/");
+    // User root is at tree["root"]
+    const userRoot = tree["root"];
+    if (!userRoot || !isPlainRecord(userRoot)) return { items: [], prefix: "" };
+
+    // Paths start with "/" — strip it for navigation
+    const pathStr = selectorArg.startsWith("/") ? selectorArg.slice(1) : selectorArg;
+    const segments = pathStr.split("/");
     const parentSegments = segments.slice(0, -1);
     const partial = segments[segments.length - 1] ?? "";
 
-    // Navigate to parent in tree
-    let navSegments = [...parentSegments];
-    if (navSegments[0] === "root") navSegments = navSegments.slice(1);
-
-    const parentNode = navSegments.length === 0 ? tree : navigateTo(tree, navSegments);
+    const parentNode = parentSegments.length === 0 ? userRoot : navigateTo(userRoot, parentSegments);
     if (!parentNode) return { items: [], prefix: "" };
 
     const keys = getChildKeys(parentNode).filter(k => k.startsWith(partial));
-    const prefix = parentSegments.length > 0
-      ? parentSegments.join("/") + "/"
-      : (selectorArg.startsWith("root") ? "root/" : "");
+    // Rebuild the prefix with "/" notation
+    const prefix = "/" + (parentSegments.length > 0 ? parentSegments.join("/") + "/" : "");
     return { items: keys, prefix };
   }, [tree]);
 
@@ -229,12 +233,15 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
   const applyCompletion = useCallback((item: string) => {
     const parts = input.split(/\s+/);
     if (parts.length <= 1) {
+      // Completing a command name
       setInput(item + " ");
     } else {
+      // Completing a path — rebuild with "/" prefix
       const selectorArg = parts[1] ?? "";
-      const segments = selectorArg.split("/");
+      const pathStr = selectorArg.startsWith("/") ? selectorArg.slice(1) : selectorArg;
+      const segments = pathStr.split("/");
       segments[segments.length - 1] = item;
-      const newSelector = segments.join("/");
+      const newSelector = "/" + segments.join("/");
       const rest = parts.slice(2).join(" ");
       setInput(parts[0]! + " " + newSelector + (rest ? " " + rest : ""));
     }
@@ -299,6 +306,19 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     const command = firstSpace === -1 ? trimmed : trimmed.slice(0, firstSpace);
     const argsStr = firstSpace === -1 ? "" : trimmed.slice(firstSpace + 1).trim();
 
+    // User paths start with "/" (like a filesystem). Internally the CRDT
+    // stores the user root at field "root", so "/header" maps to "root/header".
+    const SELECTOR_CMDS = new Set(["get", "tree", "add", "delete", "rename", "set", "pushBack", "pushFront", "popBack", "popFront", "updateTag", "wrapRecord", "wrapList", "copy"]);
+    let effectiveArgs = argsStr;
+    if (argsStr && SELECTOR_CMDS.has(command)) {
+      const spaceIdx = argsStr.indexOf(" ");
+      const selector = spaceIdx === -1 ? argsStr : argsStr.slice(0, spaceIdx);
+      const rest = spaceIdx === -1 ? "" : argsStr.slice(spaceIdx);
+      // Strip leading "/" and prepend "root/"
+      const cleaned = selector.startsWith("/") ? selector.slice(1) : selector;
+      effectiveArgs = (cleaned ? "root/" + cleaned : "root") + rest;
+    }
+
     try {
       switch (command) {
         case "help":
@@ -319,7 +339,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
         case "tree": {
           if (argsStr) {
-            const nodes = denicek.get(argsStr);
+            const nodes = denicek.get(effectiveArgs);
             if (nodes.length === 0) {
               pushOutput({ text: `No nodes at '${argsStr}'`, kind: "error" });
             } else {
@@ -337,7 +357,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
         case "get": {
           if (!argsStr) { pushOutput({ text: "Usage: get <selector>", kind: "error" }); break; }
-          const nodes = denicek.get(argsStr);
+          const nodes = denicek.get(effectiveArgs);
           if (nodes.length === 0) {
             pushOutput({ text: `No nodes at '${argsStr}'`, kind: "error" });
           } else {
@@ -347,7 +367,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "add": {
-          const { args } = splitArgs(argsStr, 3);
+          const { args } = splitArgs(effectiveArgs, 3);
           if (args.length < 2) { pushOutput({ text: "Usage: add <selector> <field> [value|json]", kind: "error" }); break; }
           const [target, field] = args as [string, string];
           const value = args[2] ? parseValue(args[2]) : "";
@@ -357,7 +377,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "delete": {
-          const { args } = splitArgs(argsStr, 2);
+          const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: delete <selector> <field>", kind: "error" }); break; }
           const [target, field] = args as [string, string];
           const id = denicek.delete(target!, field!);
@@ -366,7 +386,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "rename": {
-          const { args } = splitArgs(argsStr, 3);
+          const { args } = splitArgs(effectiveArgs, 3);
           if (args.length < 3) { pushOutput({ text: "Usage: rename <selector> <old-field> <new-field>", kind: "error" }); break; }
           const [target, from, to] = args as [string, string, string];
           const id = denicek.rename(target!, from!, to!);
@@ -375,7 +395,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "set": {
-          const { args } = splitArgs(argsStr, 2);
+          const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: set <selector> <value>", kind: "error" }); break; }
           const [target] = args as [string];
           const value = parseValue(args[1]!);
@@ -386,7 +406,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "pushBack": {
-          const { args } = splitArgs(argsStr, 2);
+          const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: pushBack <selector> <value|json>", kind: "error" }); break; }
           const [target] = args as [string];
           const value = parseValue(args[1]!);
@@ -396,7 +416,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "pushFront": {
-          const { args } = splitArgs(argsStr, 2);
+          const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: pushFront <selector> <value|json>", kind: "error" }); break; }
           const [target] = args as [string];
           const value = parseValue(args[1]!);
@@ -420,7 +440,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "updateTag": {
-          const { args } = splitArgs(argsStr, 2);
+          const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: updateTag <selector> <new-tag>", kind: "error" }); break; }
           const [target, tag] = args as [string, string];
           const id = denicek.updateTag(target!, tag!);
@@ -429,7 +449,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "wrapRecord": {
-          const { args } = splitArgs(argsStr, 3);
+          const { args } = splitArgs(effectiveArgs, 3);
           if (args.length < 3) { pushOutput({ text: "Usage: wrapRecord <selector> <field> <tag>", kind: "error" }); break; }
           const [target, field, tag] = args as [string, string, string];
           const id = denicek.wrapRecord(target!, field!, tag!);
@@ -438,7 +458,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "wrapList": {
-          const { args } = splitArgs(argsStr, 2);
+          const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: wrapList <selector> <tag>", kind: "error" }); break; }
           const [target, tag] = args as [string, string];
           const id = denicek.wrapList(target!, tag!);
@@ -447,7 +467,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }
 
         case "copy": {
-          const { args } = splitArgs(argsStr, 2);
+          const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: copy <target> <source>", kind: "error" }); break; }
           const [target, source] = args as [string, string];
           const id = denicek.copy(target!, source!);
