@@ -47,7 +47,7 @@ function renderTree(node: PlainNode, path: string, indent: number, lines: string
     return;
   }
   if (isPlainList(node)) {
-    lines.push(`${prefix}${path} [${node.$tag}] (list, ${node.$items.length} items)`);
+    lines.push(`${prefix}📋 ${path} [${node.$tag}] (${node.$items.length} items)`);
     node.$items.forEach((item, i) => {
       renderTree(item, `${i}`, indent + 1, lines, maxDepth);
     });
@@ -55,30 +55,37 @@ function renderTree(node: PlainNode, path: string, indent: number, lines: string
   }
   if (isPlainRecord(node)) {
     const tag = node.$tag as string;
-    const id = node["$id"] as string | undefined;
     const kind = node["$kind"] as string | undefined;
-    // For element nodes, show a clean tree line
+    const SKIP = new Set(["$tag", "$id", "$kind", "$order"]);
+
     if (kind === "value") {
       const val = node["value"];
-      lines.push(`${prefix}${path} = ${typeof val === "string" ? `"${val}"` : String(val)}`);
+      lines.push(`${prefix}📝 ${path} = ${typeof val === "string" ? `"${val}"` : String(val)}`);
       return;
     }
     if (kind === "ref") {
-      lines.push(`${prefix}${path} -> ${node["target"]}`);
+      lines.push(`${prefix}🔗 ${path} → ${node["target"]}`);
       return;
     }
     if (kind === "formula") {
-      lines.push(`${prefix}${path} ƒ(${node["operation"]})`);
+      lines.push(`${prefix}⚙️ ${path} ƒ(${node["operation"]})`);
+    } else if (kind === "action") {
+      lines.push(`${prefix}▶️ ${path} "${node["label"]}"`);
+      return;
     } else {
-      lines.push(`${prefix}${path} [${tag}]${id ? "" : ""}`);
+      // Record/element — count children
+      let childCount = 0;
+      for (const [key, child] of Object.entries(node)) {
+        if (!SKIP.has(key) && child !== undefined && typeof child === "object" && child !== null && "$tag" in child) childCount++;
+      }
+      lines.push(`${prefix}📁 ${path} {${tag}} (${childCount})`);
     }
-    const META = new Set(["$tag", "$id", "$kind", "$order"]);
+
     for (const [key, child] of Object.entries(node)) {
-      if (META.has(key)) continue;
+      if (SKIP.has(key)) continue;
       if (child !== undefined && typeof child === "object" && child !== null && "$tag" in child) {
         renderTree(child as PlainNode, key, indent + 1, lines, maxDepth);
-      } else if (child !== undefined && !META.has(key)) {
-        // Show primitive attributes inline
+      } else if (child !== undefined && !SKIP.has(key)) {
         const isKnownField = key === "value" || key === "label" || key === "operation" || key === "target" || key === "actions" || key === "params";
         if (!isKnownField) {
           lines.push(`${prefix}  @${key}=${typeof child === "string" ? `"${child}"` : String(child)}`);
