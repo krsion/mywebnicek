@@ -580,9 +580,9 @@ function splitArgs(argsStr: string, max: number): { args: string[] } {
 
 function msgColor(kind: OutputMessage["kind"]): string {
   switch (kind) {
-    case "success": return "#4ec9b0";
-    case "error": return "#f44747";
-    case "info": return "#d4d4d4";
+    case "success": return "#107c10";
+    case "error": return "#d13438";
+    case "info": return "#424242";
   }
 }
 
@@ -592,9 +592,9 @@ const FONT = "Consolas, Monaco, 'Courier New', monospace";
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    background: "#1e1e1e",
-    borderTop: "1px solid #333",
-    color: "#d4d4d4",
+    background: "#fafafa",
+    borderTop: "1px solid #e0e0e0",
+    color: "#242424",
     fontFamily: FONT,
     fontSize: 13,
     flexShrink: 0,
@@ -606,7 +606,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   prompt: {
-    color: "#569cd6",
+    color: "#0078d4",
     fontWeight: "bold",
     fontSize: 14,
     userSelect: "none",
@@ -620,10 +620,10 @@ const styles: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: "none",
     outline: "none",
-    color: "#d4d4d4",
+    color: "#242424",
     fontFamily: FONT,
     fontSize: 13,
-    caretColor: "#d4d4d4",
+    caretColor: "#242424",
     position: "relative",
     zIndex: 1,
   },
@@ -631,7 +631,7 @@ const styles: Record<string, React.CSSProperties> = {
     position: "absolute",
     top: 0,
     left: 0,
-    color: "#555",
+    color: "#a0a0a0",
     fontFamily: FONT,
     fontSize: 13,
     pointerEvents: "none",
@@ -640,9 +640,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   helpButton: {
     background: "transparent",
-    border: "1px solid #555",
+    border: "1px solid #d0d0d0",
     borderRadius: 4,
-    color: "#888",
+    color: "#616161",
     fontFamily: FONT,
     fontSize: 12,
     width: 24,
@@ -655,8 +655,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   helpOverlay: {
     padding: "8px 12px",
-    borderBottom: "1px solid #333",
-    background: "#252526",
+    borderBottom: "1px solid #e0e0e0",
+    background: "#f0f0f0",
     maxHeight: 200,
     overflowY: "auto" as const,
   },
@@ -664,7 +664,7 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 0,
     fontFamily: FONT,
     fontSize: 12,
-    color: "#d4d4d4",
+    color: "#424242",
     whiteSpace: "pre-wrap",
     lineHeight: 1.5,
   },

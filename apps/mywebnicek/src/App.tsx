@@ -109,14 +109,14 @@ export const App = () => {
           display: "flex",
           alignItems: "center",
           gap: 12,
-          padding: "6px 16px",
-          background: "#252526",
-          borderBottom: "1px solid #333",
+          padding: "8px 16px",
+          background: "#f5f5f5",
+          borderBottom: "1px solid #e0e0e0",
           flexShrink: 0,
         }}>
-          <Text size={400} weight="semibold" style={{ color: "#fff" }}>MyDenicek</Text>
+          <Text size={400} weight="semibold" style={{ color: "#242424" }}>MyDenicek</Text>
           <SyncStatusIndicator status={status} latency={latency} error={error} />
-          <span style={{ color: "#888", fontFamily: "Consolas, monospace", fontSize: 11, marginLeft: "auto" }}>
+          <span style={{ color: "#616161", fontFamily: "Consolas, monospace", fontSize: 11, marginLeft: "auto" }}>
             {roomId}
           </span>
         </div>
