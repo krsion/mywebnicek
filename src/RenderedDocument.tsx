@@ -1,4 +1,4 @@
-import type { PlainNode, PlainRecord } from "@jsr/mydenicek__core";
+import type { PlainNode, PlainRecord } from "@mydenicek/core";
 import React from "react";
 
 function isRec(v: PlainNode): v is PlainRecord {

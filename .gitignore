@@ -6,11 +6,27 @@
 *.fdb_latexmk
 *.synctex.gz
 *.xmpi
+
+# Deno / Node
 node_modules/
 dist/
-packages/mydenicek-core/dist/index.d.ts
-packages/mydenicek-core/dist/index.js
-apps/mydenicek-sync-server/data/*
+
+# Build info
 *.tsbuildinfo
-packages/mydenicek-mcp/tsconfig.tsbuildinfo
-packages/mydenicek-react/tsconfig.tsbuildinfo
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Editor
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.local

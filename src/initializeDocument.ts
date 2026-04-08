@@ -5,7 +5,7 @@
  * Primitive values are stored as plain strings (no $value wrappers).
  */
 
-import type { Denicek, PlainNode } from "@jsr/mydenicek__core";
+import type { Denicek, PlainNode } from "@mydenicek/core";
 
 /** Shorthand for creating action records */
 function actionNode(label: string, target: string, patches: ActionPatch[]): PlainNode {

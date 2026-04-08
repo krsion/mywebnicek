@@ -1,5 +1,5 @@
-import type { PlainList, PlainNode, PlainRecord, PlainRef, PrimitiveValue } from "@jsr/mydenicek__core";
-import type { UseDenicekReturn } from "@jsr/mydenicek__react";
+import type { PlainList, PlainNode, PlainRecord, PlainRef, PrimitiveValue } from "@mydenicek/core";
+import type { UseDenicekReturn } from "@mydenicek/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface CommandBarProps {

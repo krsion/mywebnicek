@@ -13,24 +13,19 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js 22
-        uses: actions/setup-node@v5
-        with:
-          node-version: '22.x'
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
 
       - name: Install dependencies
-        run: |
-          npm ci
+        run: deno install
 
       - name: Build
-        working-directory: ./apps/mywebnicek
-        run: |
-          npm run build
+        run: deno task build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./apps/mywebnicek/dist
+          path: ./dist
 
   # Deploy job
   deploy:

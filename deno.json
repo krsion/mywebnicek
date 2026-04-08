@@ -1,0 +1,31 @@
+{
+  "tasks": {
+    "dev": "deno run -A npm:vite",
+    "build": "deno run -A npm:vite build",
+    "preview": "deno run -A npm:vite preview",
+    "lint": "deno lint src/",
+    "fmt": "deno fmt src/ deno.json index.html vite.config.ts",
+    "check": "deno check src/main.tsx"
+  },
+  "imports": {
+    "@mydenicek/core": "jsr:@mydenicek/core@^0.2",
+    "@mydenicek/react": "jsr:@mydenicek/react@^0.2",
+    "react": "npm:react@^19.2.0",
+    "react-dom": "npm:react-dom@^19.2.0",
+    "react/jsx-runtime": "npm:react@^19.2.0/jsx-runtime",
+    "@fluentui/react-components": "npm:@fluentui/react-components@^9.72.7",
+    "@uiw/react-json-view": "npm:@uiw/react-json-view@^2.0.0-alpha.39",
+    "@vitejs/plugin-react": "npm:@vitejs/plugin-react@^5.1.0",
+    "vite": "npm:vite@^6.3.5",
+    "vite-plugin-wasm": "npm:vite-plugin-wasm@^3.5.0",
+    "vite-plugin-top-level-await": "npm:vite-plugin-top-level-await@^1.6.0",
+    "babel-plugin-react-compiler": "npm:babel-plugin-react-compiler@^19.1.0-rc.3",
+    "@deno/vite-plugin": "npm:@deno/vite-plugin@^1"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "lib": ["dom", "dom.iterable", "esnext"]
+  },
+  "nodeModulesDir": "auto"
+}

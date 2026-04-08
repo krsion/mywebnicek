@@ -1,6 +1,6 @@
 {
     "recommendations": [
-        "vitest.explorer",
+        "denoland.vscode-deno",
         "ms-playwright.playwright"
     ]
 }

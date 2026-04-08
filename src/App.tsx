@@ -1,6 +1,6 @@
 import { Text } from "@fluentui/react-components";
-import type { PlainRecord } from "@jsr/mydenicek__react";
-import { useDenicek } from "@jsr/mydenicek__react";
+import type { PlainRecord } from "@mydenicek/react";
+import { useDenicek } from "@mydenicek/react";
 import { useEffect } from "react";
 
 import { CommandBar } from "./CommandBar";

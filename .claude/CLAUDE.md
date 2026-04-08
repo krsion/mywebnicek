@@ -4,17 +4,22 @@
 
 ### Lint (always run after making changes)
 ```bash
-npm run lint
+deno lint src/
+```
+
+### Format
+```bash
+deno fmt src/ deno.json index.html vite.config.ts
 ```
 
 ### Build
 ```bash
-npm run build
+deno task build
 ```
 
-### Build specific package
+### Dev server
 ```bash
-cd packages/mydenicek-core && npm run build
+deno task dev
 ```
 
 ---
