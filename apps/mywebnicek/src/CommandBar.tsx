@@ -290,25 +290,31 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
   const updateCompletions = useCallback((text: string) => {
     const { items } = getPathCompletions(text);
     const parts = text.split(/\s+/);
+    const isPathCompletion = parts.length > 1;
     const partial = parts.length <= 1
       ? (parts[0] ?? "")
       : (parts[1] ?? "").split("/").pop() ?? "";
 
-    if (items.length === 1 && items[0]!.name !== partial) {
-      setGhostText(items[0]!.name.slice(partial.length));
-      setCompletions([]);
-    } else if (items.length > 1) {
+    if (items.length >= 1 && isPathCompletion) {
+      // Always show dropdown for path completions so user sees what's available
       setCompletions(items);
       setCompletionIdx(-1);
-      setGhostText("");
+      if (items.length === 1 && items[0]!.name !== partial) {
+        setGhostText(items[0]!.name.slice(partial.length));
+      } else {
+        setGhostText("");
+      }
+    } else if (items.length === 1 && !isPathCompletion) {
+      // Command completion — just ghost text
+      setGhostText(items[0]!.name.slice(partial.length));
+      setCompletions([]);
     } else {
       setCompletions([]);
       // Show argument hints when path is done but more args are needed
       const cmd = parts[0] ?? "";
       const hints = ARG_HINTS[cmd];
       if (hints && parts.length >= 2) {
-        // How many args after the selector have been typed?
-        const extraArgs = parts.length - 2; // parts[0]=cmd, parts[1]=selector, rest=args
+        const extraArgs = parts.length - 2;
         if (extraArgs < hints.length) {
           setGhostText(" " + hints.slice(extraArgs).join(" "));
         } else {
@@ -626,7 +632,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
       )}
 
       {/* Completions dropdown (above the input) */}
-      {completions.length > 1 && (
+      {completions.length > 0 && (
         <div style={{
           borderTop: "1px solid #e0e0e0",
           background: "#fff",
