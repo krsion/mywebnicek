@@ -14,7 +14,7 @@
   "dependencies": {
     "@fluentui/react-components": "^9.72.7",
     "@jsr/mydenicek__core": "^0.2.1",
-    "@jsr/mydenicek__react": "^0.1.0",
+    "@jsr/mydenicek__react": "^0.2.0",
     "@uiw/react-json-view": "^2.0.0-alpha.39",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

@@ -1,7 +1,7 @@
 import { Text } from "@fluentui/react-components";
 import type { PlainRecord } from "@jsr/mydenicek__react";
 import { useDenicek } from "@jsr/mydenicek__react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { CommandBar } from "./CommandBar";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -14,13 +14,12 @@ function isRec(v: unknown): v is PlainRecord {
 
 export function App() {
   const dk = useDenicek();
-  const [, rerender] = useState(0);
 
   // Initialize with sample document on first load
   useEffect(() => {
     if (!isRec(dk.doc) || !("root" in dk.doc)) {
       initializeDocument(dk.denicek);
-      rerender(v => v + 1);
+      dk.forceUpdate();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

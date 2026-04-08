@@ -394,7 +394,7 @@ export function CommandBar({ dk }: CommandBarProps) {
 
         case "tree": {
           if (argsStr) {
-            const nodes = dk.denicek.get(effectiveArgs);
+            const nodes = dk.get(effectiveArgs);
             if (nodes.length === 0) {
               pushOutput({ text: `No nodes at '${argsStr}'`, kind: "error" });
             } else {
@@ -412,7 +412,7 @@ export function CommandBar({ dk }: CommandBarProps) {
 
         case "get": {
           if (!argsStr) { pushOutput({ text: "Usage: get <selector>", kind: "error" }); break; }
-          const nodes = dk.denicek.get(effectiveArgs);
+          const nodes = dk.get(effectiveArgs);
           if (nodes.length === 0) {
             pushOutput({ text: `No nodes at '${argsStr}'`, kind: "error" });
           } else {
