@@ -2,7 +2,7 @@
  * Hook for managing selection state
  */
 
-import type { NodeData } from "@mydenicek/document";
+import type { NodeData } from "@mydenicek/core";
 import { useContext, useMemo } from "react";
 
 import { DENICEK_NODE_ID_ATTR } from "./constants.js";

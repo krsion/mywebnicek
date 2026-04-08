@@ -1,6 +1,6 @@
 /**
  * Public types for mydenicek-core
- * No Loro types are exposed - all internal CRDT details are hidden
+ * All CRDT details are hidden behind DenicekDocument.
  */
 
 
@@ -32,7 +32,6 @@ export interface ValueNodeData {
 
 /**
  * Action node data - public read-only view of a programmable button node
- * Actions are stored in a LoroList internally for editability
  */
 export interface ActionNodeData {
     id: string;
@@ -98,12 +97,12 @@ export interface OpId {
 }
 
 /**
- * Version is an array of OpIds (frontiers in Loro terminology)
+ * Version is an array of OpIds (frontiers)
  */
 export type Version = OpId[];
 
 /**
- * Generalized patch types for recording/replay - aligned with Loro diff format
+ * Generalized patch types for recording/replay
  */
 
 /** Inline node template for pre-programmed create patches (no existing node to copy from) */
@@ -151,7 +150,7 @@ export interface GroupedPatch {
 // ============================================================================
 
 /**
- * Connection status values matching loro-websocket
+ * Connection status values
  * - "idle": Never connected (initial state)
  * - "connecting": Connection attempt in progress
  * - "connected": WebSocket open and syncing

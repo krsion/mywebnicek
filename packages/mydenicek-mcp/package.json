@@ -15,7 +15,7 @@
         "test": "echo \"No tests yet\" && exit 0"
     },
     "dependencies": {
-        "@mydenicek/document": "file:../../packages/mydenicek-core"
+        "@mydenicek/core": "file:../../packages/mydenicek-core"
     },
     "devDependencies": {
         "typescript": "^5.0.0"

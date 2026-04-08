@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@fluentui/react-components": "^9.72.7",
-    "@mydenicek/document": "file:../../packages/mydenicek-core",
+    "@mydenicek/core": "file:../../packages/mydenicek-core",
     "@mydenicek/react": "file:../../packages/mydenicek-react",
     "@uiw/react-json-view": "^2.0.0-alpha.39",
     "react": "^19.2.0",

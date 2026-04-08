@@ -1,6 +1,6 @@
 import { Badge, Button, Card, CardHeader, Checkbox, Dialog, DialogActions, DialogBody, DialogContent, DialogSurface, DialogTitle, DialogTrigger, Input, Spinner, Switch, Tag, TagGroup, Text, Toast, Toaster, Toolbar, ToolbarButton, ToolbarDivider, ToolbarGroup, Tooltip, useId, useToastController } from "@fluentui/react-components";
 import { AddRegular, ArrowDownRegular, ArrowLeftRegular, ArrowRedoRegular, ArrowRightRegular, ArrowUndoRegular, ArrowUpRegular, CalculatorRegular, CameraRegular, ClipboardPasteRegular, CodeRegular, CopyRegular, DeleteRegular, DismissRegular, EditRegular, InfoRegular, LinkRegular, PersonRegular, PlayRegular, RecordRegular, RenameRegular, StopRegular } from "@fluentui/react-icons";
-import type { GeneralizedPatch, Snapshot } from "@mydenicek/document";
+import type { GeneralizedPatch, Snapshot } from "@mydenicek/core";
 import {
   useConnectivity,
   useDocumentState,

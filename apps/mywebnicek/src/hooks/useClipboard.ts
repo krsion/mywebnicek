@@ -9,7 +9,7 @@
  * input handling needed here — value nodes are copied directly.
  */
 
-import type { DenicekDocument, NodeData } from "@mydenicek/document";
+import type { DenicekDocument, NodeData } from "@mydenicek/core";
 import { useCallback, useEffect, useState } from "react";
 
 interface ClipboardData {

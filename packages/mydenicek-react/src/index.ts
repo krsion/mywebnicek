@@ -3,7 +3,7 @@
  *
  * React hooks for Loro-based Denicek documents.
  *
- * Note: Import types (NodeData, Snapshot, etc.) directly from @mydenicek/document
+ * Note: Import types (NodeData, Snapshot, etc.) directly from @mydenicek/core
  */
 
 // Constants

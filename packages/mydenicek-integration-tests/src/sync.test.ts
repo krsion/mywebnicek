@@ -8,7 +8,7 @@
  * 4. Verify server logs show expected activity
  */
 
-import { DenicekDocument, type NodeData } from "@mydenicek/document";
+import { DenicekDocument, type NodeData } from "@mydenicek/core";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -47,8 +47,8 @@ describe("Sync Integration", () => {
 
     it("should connect two clients and sync changes", async () => {
         // Create DenicekDocuments (empty, no initial content)
-        doc1 = new DenicekDocument({ peerId: 1n });
-        doc2 = new DenicekDocument({ peerId: 2n });
+        doc1 = new DenicekDocument({ peerId: "1" });
+        doc2 = new DenicekDocument({ peerId: "2" });
 
         // Connect both documents to the same room using built-in sync
         await doc1.connectToSync({ url: server.url, roomId: ROOM_ID, pingIntervalMs: 1000 });

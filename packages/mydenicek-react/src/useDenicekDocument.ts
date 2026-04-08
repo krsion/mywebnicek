@@ -5,7 +5,7 @@
 import {
     type GeneralizedPatch,
     type SyncStatus,
-} from "@mydenicek/document";
+} from "@mydenicek/core";
 import { useContext, useEffect, useState } from "react";
 
 import { DenicekContext } from "./DenicekProvider.js";
