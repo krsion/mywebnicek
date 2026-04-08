@@ -171,6 +171,8 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [output, setOutput] = useState<OutputMessage[]>([]);
   const [ghostText, setGhostText] = useState("");
+  const [completions, setCompletions] = useState<string[]>([]);
+  const [completionIdx, setCompletionIdx] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -192,89 +194,91 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     return lines.join("\n");
   }, [tree]);
 
-  // ── Tab completion ─────────────────────────────────────────────────────
+  // ── Path completion ─────────────────────────────────────────────────────
 
-  const computeCompletions = useCallback((text: string): string[] => {
+  /** Get the children names available at the current path being typed. */
+  const getPathCompletions = useCallback((text: string): { items: string[]; prefix: string } => {
     const parts = text.split(/\s+/);
     if (parts.length <= 1) {
       // Complete command name
       const partial = parts[0] ?? "";
-      return COMMANDS.filter(c => c.startsWith(partial) && c !== partial);
+      return { items: COMMANDS.filter(c => c.startsWith(partial) && c !== partial), prefix: "" };
     }
-    // Complete selector path (second argument for most commands)
     const selectorArg = parts[1] ?? "";
-    if (!tree) return [];
+    if (!tree) return { items: [], prefix: "" };
 
     const segments = selectorArg.split("/");
     const parentSegments = segments.slice(0, -1);
     const partial = segments[segments.length - 1] ?? "";
 
-    // Navigate past "root" if it's the first segment
-    let navSegments = parentSegments;
-    if (navSegments[0] === "root") {
-      navSegments = navSegments.slice(1);
-    }
+    // Navigate to parent in tree
+    let navSegments = [...parentSegments];
+    if (navSegments[0] === "root") navSegments = navSegments.slice(1);
 
     const parentNode = navSegments.length === 0 ? tree : navigateTo(tree, navSegments);
-    if (!parentNode) return [];
+    if (!parentNode) return { items: [], prefix: "" };
 
-    const keys = getChildKeys(parentNode);
-    return keys
-      .filter(k => k.startsWith(partial) && k !== partial)
-      .map(k => {
-        const prefix = parentSegments.length > 0 ? parentSegments.join("/") + "/" : (selectorArg.startsWith("root") ? "root/" : "");
-        return prefix + k;
-      });
+    const keys = getChildKeys(parentNode).filter(k => k.startsWith(partial));
+    const prefix = parentSegments.length > 0
+      ? parentSegments.join("/") + "/"
+      : (selectorArg.startsWith("root") ? "root/" : "");
+    return { items: keys, prefix };
   }, [tree]);
 
-  const updateGhost = useCallback((text: string) => {
-    const completions = computeCompletions(text);
-    if (completions.length === 1) {
-      const parts = text.split(/\s+/);
-      if (parts.length <= 1) {
-        setGhostText(completions[0]!.slice((parts[0] ?? "").length));
-      } else {
-        const selectorArg = parts[1] ?? "";
-        const fullCompletion = completions[0]!;
-        setGhostText(fullCompletion.slice(selectorArg.length));
-      }
-    } else {
-      setGhostText("");
-    }
-  }, [computeCompletions]);
-
-  const handleTab = useCallback(() => {
-    const completions = computeCompletions(input);
-    if (completions.length === 0) return;
-
+  /** Apply a selected completion item to the input. */
+  const applyCompletion = useCallback((item: string) => {
     const parts = input.split(/\s+/);
     if (parts.length <= 1) {
-      // Complete command
-      if (completions.length === 1) {
-        setInput(completions[0]! + " ");
-        setGhostText("");
-      } else {
-        pushOutput({ text: completions.join("  "), kind: "info" });
-      }
+      setInput(item + " ");
     } else {
-      // Complete selector
-      if (completions.length === 1) {
-        const prefix = parts[0]! + " ";
-        const rest = parts.slice(2).join(" ");
-        setInput(prefix + completions[0]! + (rest ? " " + rest : ""));
-        setGhostText("");
-      } else {
-        // Show available completions
-        const segments = (parts[1] ?? "").split("/");
-        const partial = segments[segments.length - 1] ?? "";
-        const suffixes = completions.map(c => {
-          const cSegments = c.split("/");
-          return cSegments[cSegments.length - 1] ?? c;
-        }).filter(s => s.startsWith(partial));
-        pushOutput({ text: suffixes.join("  "), kind: "info" });
-      }
+      const selectorArg = parts[1] ?? "";
+      const segments = selectorArg.split("/");
+      segments[segments.length - 1] = item;
+      const newSelector = segments.join("/");
+      const rest = parts.slice(2).join(" ");
+      setInput(parts[0]! + " " + newSelector + (rest ? " " + rest : ""));
     }
-  }, [input, computeCompletions]);
+    setCompletions([]);
+    setCompletionIdx(-1);
+    setGhostText("");
+  }, [input]);
+
+  /** Update completions list and ghost text when input changes. */
+  const updateCompletions = useCallback((text: string) => {
+    const { items, prefix: _prefix } = getPathCompletions(text);
+    const parts = text.split(/\s+/);
+    const partial = parts.length <= 1
+      ? (parts[0] ?? "")
+      : (parts[1] ?? "").split("/").pop() ?? "";
+
+    if (items.length === 1 && items[0] !== partial) {
+      setGhostText(items[0]!.slice(partial.length));
+      setCompletions([]);
+    } else if (items.length > 1) {
+      setCompletions(items);
+      setCompletionIdx(-1);
+      setGhostText("");
+    } else {
+      setCompletions([]);
+      setGhostText("");
+    }
+  }, [getPathCompletions]);
+
+  const handleTab = useCallback(() => {
+    if (completions.length > 0) {
+      // Select current or first item
+      const idx = completionIdx >= 0 ? completionIdx : 0;
+      applyCompletion(completions[idx]!);
+      return;
+    }
+    const { items } = getPathCompletions(input);
+    if (items.length === 1) {
+      applyCompletion(items[0]!);
+    } else if (items.length > 1) {
+      setCompletions(items);
+      setCompletionIdx(0);
+    }
+  }, [input, completions, completionIdx, getPathCompletions, applyCompletion]);
 
   // ── Command execution ──────────────────────────────────────────────────
 
@@ -467,15 +471,29 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
       handleTab();
       return;
     }
+    if (e.key === "Escape") {
+      setCompletions([]);
+      setCompletionIdx(-1);
+      return;
+    }
     if (e.key === "Enter") {
       e.preventDefault();
+      if (completions.length > 0 && completionIdx >= 0) {
+        applyCompletion(completions[completionIdx]!);
+        return;
+      }
       executeCommand(input);
       setInput("");
       setGhostText("");
+      setCompletions([]);
       return;
     }
     if (e.key === "ArrowUp") {
       e.preventDefault();
+      if (completions.length > 0) {
+        setCompletionIdx(prev => prev <= 0 ? completions.length - 1 : prev - 1);
+        return;
+      }
       if (history.length === 0) return;
       const newIdx = historyIndex === -1 ? history.length - 1 : Math.max(0, historyIndex - 1);
       setHistoryIndex(newIdx);
@@ -485,6 +503,10 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     }
     if (e.key === "ArrowDown") {
       e.preventDefault();
+      if (completions.length > 0) {
+        setCompletionIdx(prev => prev >= completions.length - 1 ? 0 : prev + 1);
+        return;
+      }
       if (historyIndex === -1) return;
       const newIdx = historyIndex + 1;
       if (newIdx >= history.length) {
@@ -497,14 +519,14 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
       setGhostText("");
       return;
     }
-  }, [handleTab, executeCommand, input, history, historyIndex]);
+  }, [handleTab, executeCommand, input, history, historyIndex, completions, completionIdx, applyCompletion]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setInput(val);
     setHistoryIndex(-1);
-    updateGhost(val);
-  }, [updateGhost]);
+    updateCompletions(val);
+  }, [updateCompletions]);
 
   // ── Render ─────────────────────────────────────────────────────────────
 
@@ -523,6 +545,35 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
       {lastMessage && (
         <div style={{ padding: "2px 12px", fontSize: 12, color: msgColor(lastMessage.kind), fontFamily: FONT, whiteSpace: "pre-wrap", overflow: "hidden", maxHeight: 60 }}>
           {lastMessage.text}
+        </div>
+      )}
+
+      {/* Completions dropdown (above the input) */}
+      {completions.length > 1 && (
+        <div style={{
+          borderTop: "1px solid #e0e0e0",
+          background: "#fff",
+          maxHeight: 180,
+          overflowY: "auto",
+          boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
+        }}>
+          {completions.map((item, i) => (
+            <div
+              key={item}
+              onClick={() => applyCompletion(item)}
+              style={{
+                padding: "3px 12px 3px 28px",
+                fontFamily: FONT,
+                fontSize: 13,
+                cursor: "pointer",
+                background: i === completionIdx ? "#e8f0fe" : "transparent",
+                color: i === completionIdx ? "#0078d4" : "#424242",
+                borderLeft: i === completionIdx ? "3px solid #0078d4" : "3px solid transparent",
+              }}
+            >
+              {item}
+            </div>
+          ))}
         </div>
       )}
 
