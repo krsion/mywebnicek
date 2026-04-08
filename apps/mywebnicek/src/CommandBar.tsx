@@ -565,7 +565,16 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
       {/* Last output message */}
       {lastMessage && (
-        <div style={{ padding: "2px 12px", fontSize: 12, color: msgColor(lastMessage.kind), fontFamily: FONT, whiteSpace: "pre-wrap", overflow: "hidden", maxHeight: 60 }}>
+        <div style={{
+          padding: "4px 12px",
+          fontSize: 12,
+          color: msgColor(lastMessage.kind),
+          fontFamily: FONT,
+          whiteSpace: "pre-wrap",
+          overflowY: "auto",
+          maxHeight: 300,
+          borderTop: "1px solid #e0e0e0",
+        }}>
           {lastMessage.text}
         </div>
       )}
