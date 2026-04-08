@@ -66,11 +66,18 @@ function renderNode(node: PlainNode, fieldName: string): React.ReactNode {
     const children: React.ReactNode[] = [];
     for (const [key, val] of Object.entries(node)) {
         if (META.has(key) || val === undefined) continue;
-        children.push(<React.Fragment key={key}>{renderNode(val, key)}</React.Fragment>);
+        if (isRec(val)) {
+            children.push(<React.Fragment key={key}>{renderNode(val, key)}</React.Fragment>);
+        }
     }
 
     const htmlTag = safeTags.has(tag) ? tag : "div";
-    const label = fieldName ? <span style={nameLabel}>{fieldName}</span> : null;
+
+    // Don't inject <span> labels inside elements that have strict HTML nesting rules
+    const noLabelTags = new Set(["table", "thead", "tbody", "tfoot", "tr", "colgroup"]);
+    const label = fieldName && !noLabelTags.has(htmlTag)
+        ? <span style={nameLabel}>{fieldName}</span>
+        : null;
 
     return React.createElement(htmlTag, {}, label, ...children);
 }
