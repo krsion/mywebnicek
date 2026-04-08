@@ -451,11 +451,16 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         case "set": {
           const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: set <selector> <value>", kind: "error" }); break; }
-          const [target] = args as [string];
+          let [target] = args as [string];
           const value = parseValue(args[1]!);
           if (typeof value === "object") { pushOutput({ text: "set expects a primitive value (string, number, boolean)", kind: "error" }); break; }
-          const id = denicek.set(target!, value as PrimitiveValue);
-          pushOutput({ text: `Set ${target} = ${JSON.stringify(value)} → ${id}`, kind: "success" });
+          // If target is a value node (record with $kind=value), target its "value" field
+          const nodes = denicek.get(target!);
+          if (nodes.length > 0 && isPlainRecord(nodes[0]!) && nodes[0]!["$kind"] === "value") {
+            target = target + "/value";
+          }
+          denicek.set(target!, value as PrimitiveValue);
+          pushOutput({ text: `Set ${argsStr.split(" ")[0]} = ${JSON.stringify(value)}`, kind: "success" });
           break;
         }
 
