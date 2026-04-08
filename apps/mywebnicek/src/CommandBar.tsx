@@ -1,10 +1,9 @@
-import type { Denicek, PlainList, PlainNode, PlainRecord, PlainRef, PrimitiveValue } from "@jsr/mydenicek__core";
+import type { PlainList, PlainNode, PlainRecord, PlainRef, PrimitiveValue } from "@jsr/mydenicek__core";
+import type { UseDenicekReturn } from "@jsr/mydenicek__react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface CommandBarProps {
-  denicek: Denicek;
-  version: number;
-  onChange?: () => void; // called after each command to trigger re-render
+  dk: UseDenicekReturn;
 }
 
 interface OutputMessage {
@@ -212,7 +211,7 @@ const HELP_TEXT = `Commands:
 
 // ── Component ────────────────────────────────────────────────────────────
 
-export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
+export function CommandBar({ dk }: CommandBarProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -226,12 +225,8 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
 
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  // Materialize tree
-  const tree = useMemo(() => {
-    try { return denicek.materialize(); }
-    catch { return null; }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [denicek, version]);
+  // The materialized tree comes from the hook (re-renders on every mutation)
+  const tree = dk.doc;
 
   // Tree text for `tree` command — start from the user root, skip CRDT wrapper
   const treeText = useMemo(() => {
@@ -386,20 +381,20 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           break;
 
         case "undo": {
-          const id = denicek.undo();
+          const id = dk.undo();
           pushOutput({ text: `Undone → ${id}`, kind: "success" });
           break;
         }
 
         case "redo": {
-          const id = denicek.redo();
+          const id = dk.redo();
           pushOutput({ text: `Redone → ${id}`, kind: "success" });
           break;
         }
 
         case "tree": {
           if (argsStr) {
-            const nodes = denicek.get(effectiveArgs);
+            const nodes = dk.denicek.get(effectiveArgs);
             if (nodes.length === 0) {
               pushOutput({ text: `No nodes at '${argsStr}'`, kind: "error" });
             } else {
@@ -417,7 +412,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
 
         case "get": {
           if (!argsStr) { pushOutput({ text: "Usage: get <selector>", kind: "error" }); break; }
-          const nodes = denicek.get(effectiveArgs);
+          const nodes = dk.denicek.get(effectiveArgs);
           if (nodes.length === 0) {
             pushOutput({ text: `No nodes at '${argsStr}'`, kind: "error" });
           } else {
@@ -431,7 +426,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           if (args.length < 2) { pushOutput({ text: "Usage: add <selector> <field> [value|json]", kind: "error" }); break; }
           const [target, field] = args as [string, string];
           const value = args[2] ? parseValue(args[2]) : "";
-          const id = denicek.add(target!, field!, value);
+          const id = dk.add(target!, field!, value);
           pushOutput({ text: `Added '${field}' to ${target} → ${id}`, kind: "success" });
           break;
         }
@@ -440,7 +435,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: delete <selector> <field>", kind: "error" }); break; }
           const [target, field] = args as [string, string];
-          const id = denicek.delete(target!, field!);
+          const id = dk.delete(target!, field!);
           pushOutput({ text: `Deleted '${field}' from ${target} → ${id}`, kind: "success" });
           break;
         }
@@ -449,7 +444,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           const { args } = splitArgs(effectiveArgs, 3);
           if (args.length < 3) { pushOutput({ text: "Usage: rename <selector> <old-field> <new-field>", kind: "error" }); break; }
           const [target, from, to] = args as [string, string, string];
-          const id = denicek.rename(target!, from!, to!);
+          const id = dk.rename(target!, from!, to!);
           pushOutput({ text: `Renamed '${from}' → '${to}' on ${target} → ${id}`, kind: "success" });
           break;
         }
@@ -460,7 +455,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           const [target] = args as [string];
           const value = parseValue(args[1]!);
           if (typeof value === "object") { pushOutput({ text: "set expects a primitive value (string, number, boolean)", kind: "error" }); break; }
-          denicek.set(target!, value as PrimitiveValue);
+          dk.set(target!, value as PrimitiveValue);
           pushOutput({ text: `Set ${argsStr.split(" ")[0]} = ${JSON.stringify(value)}`, kind: "success" });
           break;
         }
@@ -470,7 +465,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           if (args.length < 2) { pushOutput({ text: "Usage: pushBack <selector> <value|json>", kind: "error" }); break; }
           const [target] = args as [string];
           const value = parseValue(args[1]!);
-          const id = denicek.pushBack(target!, value);
+          const id = dk.pushBack(target!, value);
           pushOutput({ text: `Pushed to back of ${target} → ${id}`, kind: "success" });
           break;
         }
@@ -480,21 +475,21 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           if (args.length < 2) { pushOutput({ text: "Usage: pushFront <selector> <value|json>", kind: "error" }); break; }
           const [target] = args as [string];
           const value = parseValue(args[1]!);
-          const id = denicek.pushFront(target!, value);
+          const id = dk.pushFront(target!, value);
           pushOutput({ text: `Pushed to front of ${target} → ${id}`, kind: "success" });
           break;
         }
 
         case "popBack": {
           if (!argsStr) { pushOutput({ text: "Usage: popBack <selector>", kind: "error" }); break; }
-          const id = denicek.popBack(argsStr);
+          const id = dk.popBack(argsStr);
           pushOutput({ text: `Popped back from ${argsStr} → ${id}`, kind: "success" });
           break;
         }
 
         case "popFront": {
           if (!argsStr) { pushOutput({ text: "Usage: popFront <selector>", kind: "error" }); break; }
-          const id = denicek.popFront(argsStr);
+          const id = dk.popFront(argsStr);
           pushOutput({ text: `Popped front from ${argsStr} → ${id}`, kind: "success" });
           break;
         }
@@ -503,7 +498,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: updateTag <selector> <new-tag>", kind: "error" }); break; }
           const [target, tag] = args as [string, string];
-          const id = denicek.updateTag(target!, tag!);
+          const id = dk.updateTag(target!, tag!);
           pushOutput({ text: `Updated tag on ${target} → '${tag}' (${id})`, kind: "success" });
           break;
         }
@@ -512,7 +507,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           const { args } = splitArgs(effectiveArgs, 3);
           if (args.length < 3) { pushOutput({ text: "Usage: wrapRecord <selector> <field> <tag>", kind: "error" }); break; }
           const [target, field, tag] = args as [string, string, string];
-          const id = denicek.wrapRecord(target!, field!, tag!);
+          const id = dk.wrapRecord(target!, field!, tag!);
           pushOutput({ text: `Wrapped ${target} in record '${field}' [${tag}] → ${id}`, kind: "success" });
           break;
         }
@@ -521,7 +516,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: wrapList <selector> <tag>", kind: "error" }); break; }
           const [target, tag] = args as [string, string];
-          const id = denicek.wrapList(target!, tag!);
+          const id = dk.wrapList(target!, tag!);
           pushOutput({ text: `Wrapped ${target} in list [${tag}] → ${id}`, kind: "success" });
           break;
         }
@@ -530,7 +525,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
           const { args } = splitArgs(effectiveArgs, 2);
           if (args.length < 2) { pushOutput({ text: "Usage: copy <target> <source>", kind: "error" }); break; }
           const [target, source] = args as [string, string];
-          const id = denicek.copy(target!, source!);
+          const id = dk.copy(target!, source!);
           pushOutput({ text: `Copied ${source} → ${target} (${id})`, kind: "success" });
           break;
         }
@@ -541,8 +536,7 @@ export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
     } catch (err) {
       pushOutput({ text: String(err instanceof Error ? err.message : err), kind: "error" });
     }
-    onChange?.();
-  }, [denicek, pushOutput, treeText, onChange]);
+  }, [dk, pushOutput, treeText]);
 
   // ── Key handlers ───────────────────────────────────────────────────────
 

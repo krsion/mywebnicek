@@ -1,12 +1,12 @@
 import { Text } from "@fluentui/react-components";
-import type { PlainRecord } from "@jsr/mydenicek__core";
-import { useEffect } from "react";
+import type { PlainRecord } from "@jsr/mydenicek__react";
+import { useDenicek } from "@jsr/mydenicek__react";
+import { useEffect, useState } from "react";
 
 import { CommandBar } from "./CommandBar";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { initializeDocument } from "./initializeDocument";
 import { RenderedDocument } from "./RenderedDocument.tsx";
-import { useDenicek } from "./useDenicek";
 
 function isRec(v: unknown): v is PlainRecord {
   return typeof v === "object" && v !== null && "$tag" in (v as Record<string, unknown>) && !("$items" in (v as Record<string, unknown>)) && !("$ref" in (v as Record<string, unknown>));
@@ -14,13 +14,13 @@ function isRec(v: unknown): v is PlainRecord {
 
 export function App() {
   const dk = useDenicek();
+  const [, rerender] = useState(0);
 
   // Initialize with sample document on first load
   useEffect(() => {
-    const tree = dk.denicek.materialize();
-    if (!isRec(tree) || !("root" in tree)) {
+    if (!isRec(dk.doc) || !("root" in dk.doc)) {
       initializeDocument(dk.denicek);
-      dk.bump();
+      rerender(v => v + 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -49,7 +49,7 @@ export function App() {
 
       {/* Bottom command bar */}
       <ErrorBoundary>
-        <CommandBar denicek={dk.denicek} version={dk.version} onChange={dk.bump} />
+        <CommandBar dk={dk} />
       </ErrorBoundary>
     </div>
   );
