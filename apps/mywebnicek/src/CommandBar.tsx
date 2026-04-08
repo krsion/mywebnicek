@@ -47,7 +47,7 @@ function renderTree(node: PlainNode, path: string, indent: number, lines: string
     return;
   }
   if (isPlainList(node)) {
-    lines.push(`${prefix}📋 ${path} [${node.$tag}] (${node.$items.length} items)`);
+    lines.push(`${prefix}${path} [${node.$tag}] (${node.$items.length} items)`);
     node.$items.forEach((item, i) => {
       renderTree(item, `${i}`, indent + 1, lines, maxDepth);
     });
@@ -60,25 +60,20 @@ function renderTree(node: PlainNode, path: string, indent: number, lines: string
 
     if (kind === "value") {
       const val = node["value"];
-      lines.push(`${prefix}📝 ${path} = ${typeof val === "string" ? `"${val}"` : String(val)}`);
+      lines.push(`${prefix}${path} = ${typeof val === "string" ? `"${val}"` : String(val)}`);
       return;
     }
     if (kind === "ref") {
-      lines.push(`${prefix}🔗 ${path} → ${node["target"]}`);
+      lines.push(`${prefix}${path} → ${node["target"]}`);
       return;
     }
     if (kind === "formula") {
-      lines.push(`${prefix}⚙️ ${path} ƒ(${node["operation"]})`);
+      lines.push(`${prefix}${path} ƒ(${node["operation"]})`);
     } else if (kind === "action") {
-      lines.push(`${prefix}▶️ ${path} "${node["label"]}"`);
+      lines.push(`${prefix}${path} ▶ "${node["label"]}"`);
       return;
     } else {
-      // Record/element — count children
-      let childCount = 0;
-      for (const [key, child] of Object.entries(node)) {
-        if (!SKIP.has(key) && child !== undefined && typeof child === "object" && child !== null && "$tag" in child) childCount++;
-      }
-      lines.push(`${prefix}📁 ${path} {${tag}} (${childCount})`);
+      lines.push(`${prefix}${path} {${tag}}`);
     }
 
     for (const [key, child] of Object.entries(node)) {
