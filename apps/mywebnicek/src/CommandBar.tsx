@@ -54,10 +54,36 @@ function renderTree(node: PlainNode, path: string, indent: number, lines: string
     return;
   }
   if (isPlainRecord(node)) {
-    lines.push(`${prefix}${path} [${node.$tag}]`);
+    const tag = node.$tag as string;
+    const id = node["$id"] as string | undefined;
+    const kind = node["$kind"] as string | undefined;
+    // For element nodes, show a clean tree line
+    if (kind === "value") {
+      const val = node["value"];
+      lines.push(`${prefix}${path} = ${typeof val === "string" ? `"${val}"` : String(val)}`);
+      return;
+    }
+    if (kind === "ref") {
+      lines.push(`${prefix}${path} -> ${node["target"]}`);
+      return;
+    }
+    if (kind === "formula") {
+      lines.push(`${prefix}${path} ƒ(${node["operation"]})`);
+    } else {
+      lines.push(`${prefix}${path} [${tag}]${id ? "" : ""}`);
+    }
+    const META = new Set(["$tag", "$id", "$kind", "$order"]);
     for (const [key, child] of Object.entries(node)) {
-      if (key === "$tag") continue;
-      renderTree(child, key, indent + 1, lines, maxDepth);
+      if (META.has(key)) continue;
+      if (child !== undefined && typeof child === "object" && child !== null && "$tag" in child) {
+        renderTree(child as PlainNode, key, indent + 1, lines, maxDepth);
+      } else if (child !== undefined && !META.has(key)) {
+        // Show primitive attributes inline
+        const isKnownField = key === "value" || key === "label" || key === "operation" || key === "target" || key === "actions" || key === "params";
+        if (!isKnownField) {
+          lines.push(`${prefix}  @${key}=${typeof child === "string" ? `"${child}"` : String(child)}`);
+        }
+      }
     }
   }
 }
