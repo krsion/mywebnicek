@@ -22,7 +22,7 @@ export function initializeDocument(dk: Denicek): void {
     // Header
     el(dk, "root", "header", "header");
     el(dk, "root/header", "title", "h1");
-    dk.add("root/header/title", "text", "MyDenicek");
+    dk.add("root/header/title", "text", "mywebnicek");
     el(dk, "root/header", "subtitle", "p");
     dk.add("root/header/subtitle", "text", "A local-first collaborative document editor");
 

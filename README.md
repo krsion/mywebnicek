@@ -1,4 +1,4 @@
-# MyDenicek: Local-First Collaborative Document Editor
+# mywebnicek: Local-First Collaborative Document Editor
 
 **Author**: Bc. Ondřej Krsička  
 **Supervisor**: Mgr. Tomáš Petříček, Ph.D.  
@@ -6,19 +6,19 @@
 
 ## About
 
-MyDenicek is a **local-first collaborative document editor** for tagged document trees. It builds on the original [Denicek](https://tomasp.net/academic/papers/denicek/) system by Tomáš Petříček, extending it with real-time multi-peer collaboration via a custom OT-based CRDT.
+mywebnicek is a **local-first collaborative document editor** for tagged document trees. It builds on the original [Denicek](https://tomasp.net/academic/papers/denicek/) system by Tomáš Petříček, extending it with real-time multi-peer collaboration via a custom OT-based CRDT.
 
 The core CRDT uses an event DAG with vector clocks and operational transformation of selector paths to achieve strong eventual consistency. Documents are modeled as tagged trees of records, lists, primitives, and references — addressed by filesystem-style selectors like `/header/title/text`.
 
 ## Live Demo
 
-https://krsion.github.io/MyDenicek/
+https://krsion.github.io/mywebnicek/
 
 ## Repositories
 
 | Repo | Description | Published as |
 |------|-------------|-------------|
-| **[MyDenicek](https://github.com/krsion/MyDenicek)** (this) | Web application (Deno + Vite + React) | GitHub Pages |
+| **[mywebnicek](https://github.com/krsion/mywebnicek)** (this) | Web application (Deno + Vite + React) | GitHub Pages |
 | **[mydenicek-core](https://github.com/krsion/mydenicek-core)** | CRDT engine + React hook + sync server | [`@mydenicek/core`](https://jsr.io/@mydenicek/core), [`@mydenicek/react`](https://jsr.io/@mydenicek/react) on JSR |
 
 ## Documentation

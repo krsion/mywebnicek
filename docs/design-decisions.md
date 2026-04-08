@@ -1,10 +1,10 @@
 # Design Decisions
 
-**Project**: MyDenicek  
+**Project**: mywebnicek  
 **Author**: Bc. Ondřej Krsička  
 **Supervisor**: Mgr. Tomáš Petříček, Ph.D.
 
-This document explains the rationale behind key architectural choices in MyDenicek.
+This document explains the rationale behind key architectural choices in mywebnicek.
 
 ---
 
@@ -41,7 +41,7 @@ When two users concurrently wrap the same node, both create wrapper elements and
 The orphaned wrapper cannot be automatically cleaned up because it is **observationally indistinguishable** from an intentionally created empty element.
 
 **The Solution:**
-The mydenicek-core engine supports `wrapRecord` and `wrapList` as *single atomic events* with dedicated OT rules. The OT transformation ensures that concurrent wraps on the same node are resolved deterministically — only one wrap succeeds, and the other becomes a no-op conflict that is reported to the user.
+The mywebnicek-core engine supports `wrapRecord` and `wrapList` as *single atomic events* with dedicated OT rules. The OT transformation ensures that concurrent wraps on the same node are resolved deterministically — only one wrap succeeds, and the other becomes a no-op conflict that is reported to the user.
 
 See [compound-operation-decomposition.md](design/compound-operation-decomposition.md) for the full theoretical analysis.
 

@@ -38,7 +38,7 @@ export function App() {
         borderBottom: "1px solid #e0e0e0",
         flexShrink: 0,
       }}>
-        <Text size={400} weight="semibold" style={{ color: "#242424" }}>MyDenicek</Text>
+        <Text size={400} weight="semibold" style={{ color: "#242424" }}>mywebnicek</Text>
       </div>
 
       {/* Main area — rendered document */}

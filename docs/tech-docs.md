@@ -1,22 +1,22 @@
 # Technical Documentation
 
-**Project**: MyDenicek — Local-First Collaborative Document Editor  
+**Project**: mywebnicek — Local-First Collaborative Document Editor  
 **Course**: NPRG070, Charles University, Faculty of Mathematics and Physics  
 **Author**: Bc. Ondřej Krsička  
 **Supervisor**: Mgr. Tomáš Petříček, Ph.D.  
 **Repositories**:
-- Core engine: [krsion/mydenicek-core](https://github.com/krsion/mydenicek-core) — published on JSR as `@mydenicek/core`
-- Web application: [krsion/MyDenicek](https://github.com/krsion/MyDenicek)
+- Core engine: [krsion/mywebnicek-core](https://github.com/krsion/mywebnicek-core) — published on JSR as `@mydenicek/core`
+- Web application: [krsion/mywebnicek](https://github.com/krsion/mywebnicek)
 
 ---
 
 ## 1. Abstract
 
-MyDenicek is a local-first collaborative document editor that enables real-time co-editing of tagged document trees with automatic conflict resolution. The project extends the original Denicek system — a computational substrate for document-oriented end-user programming — with a production-quality implementation that supports offline editing, undo/redo, recording/replay of editing sessions, and a formula engine for computed values.
+mywebnicek is a local-first collaborative document editor that enables real-time co-editing of tagged document trees with automatic conflict resolution. The project extends the original Denicek system — a computational substrate for document-oriented end-user programming — with a production-quality implementation that supports offline editing, undo/redo, recording/replay of editing sessions, and a formula engine for computed values.
 
 The core contribution is a **custom OT-based event DAG** that achieves strong eventual consistency without relying on third-party CRDT libraries. Each peer records edits as events in a causal directed acyclic graph ordered by vector clocks, with hand-written operational transformation rules for structural edits (rename, wrap, unwrap, delete, copy). Deterministic topological replay ensures that all peers converge to the same document state regardless of event delivery order. The approach is validated through property-based convergence testing and a standalone random fuzzer.
 
-The system is split into two repositories: `mydenicek-core` (a pure TypeScript CRDT engine with zero external dependencies) and `MyDenicek` (a React 19 + Fluent UI web application providing the user-facing editor). Both repositories are open-source and deployed live.
+The system is split into two repositories: `mywebnicek-core` (a pure TypeScript CRDT engine with zero external dependencies) and `mywebnicek` (a React 19 + Fluent UI web application providing the user-facing editor). Both repositories are open-source and deployed live.
 
 ---
 
@@ -24,20 +24,20 @@ The system is split into two repositories: `mydenicek-core` (a pure TypeScript C
 
 ### 2.1 Purpose
 
-This document provides a comprehensive technical description of the MyDenicek system: its architecture, design decisions, algorithms, testing strategy, and deployment. It is written for reviewers and researchers familiar with distributed systems, CRDTs, and collaborative editing.
+This document provides a comprehensive technical description of the mywebnicek system: its architecture, design decisions, algorithms, testing strategy, and deployment. It is written for reviewers and researchers familiar with distributed systems, CRDTs, and collaborative editing.
 
 ### 2.2 Scope
 
 The documentation covers:
 - The `@mydenicek/core` library (CRDT engine, document model, edit operations, formula engine)
 - The `@mydenicek/sync-server` package (WebSocket sync protocol)
-- The `MyDenicek` web application (React UI, Loro-based CRDT integration)
+- The `mywebnicek` web application (React UI, Loro-based CRDT integration)
 - Testing methodology (unit tests, property-based tests, random fuzzer, Playwright E2E)
 - Deployment (Azure App Service, GitHub Pages, CI/CD)
 
 ### 2.3 Background — Original Denicek System
 
-MyDenicek builds upon the Denicek system described in:
+mywebnicek builds upon the Denicek system described in:
 
 > Petříček, T. "Denicek: Computational Substrate for Document-Oriented End-User Programming." UIST 2025. [DOI: 10.1145/3746059.3747646](https://doi.org/10.1145/3746059.3747646)  
 > Project page: [https://tomasp.net/academic/papers/denicek/](https://tomasp.net/academic/papers/denicek/)
@@ -48,7 +48,7 @@ The original Denicek defines:
 - **Operational transformation** for resolving concurrent structural edits.
 - **Programming by demonstration** where user edits are recorded and replayed as generalized scripts.
 
-MyDenicek's core engine is a faithful reimplementation of this architecture adapted for a causal DAG (rather than a linear OT log), with added support for undo/redo, formula evaluation, reference integrity, and event graph compaction.
+mywebnicek's core engine is a faithful reimplementation of this architecture adapted for a causal DAG (rather than a linear OT log), with added support for undo/redo, formula evaluation, reference integrity, and event graph compaction.
 
 ---
 
@@ -58,17 +58,17 @@ MyDenicek's core engine is a faithful reimplementation of this architecture adap
 
 The project is split into two independent repositories with complementary roles:
 
-**mydenicek-core** (`@mydenicek/core` on JSR)  
+**mywebnicek-core** (`@mydenicek/core` on JSR)  
 A pure TypeScript CRDT engine with zero external runtime dependencies. It implements the event DAG, document model, edit operations, operational transformation, undo/redo, formula engine, and sync protocol. It is published on the JSR (JavaScript Registry) and can be consumed by any Deno, Node.js, or browser application.
 
-**MyDenicek** (web application)  
+**mywebnicek** (web application)  
 A React 19 monorepo that provides a polished collaborative document editor. It uses Loro CRDTs (via `loro-crdt` v1.9.0) as its internal CRDT substrate and wraps them with a `DenicekDocument` class that hides Loro internals behind a clean TypeScript API. The UI is built with Fluent UI v9 components and deployed to GitHub Pages.
 
-> **Note on the two CRDT approaches**: The two repositories implement different CRDT strategies. The core engine (`mydenicek-core`) uses a custom OT-based event DAG with path-based selectors — a direct descendant of the original Denicek paper's architecture. The web application (`MyDenicek`) uses Loro CRDTs with ID-addressed nodes — the approach originally prescribed by the project specification. This dual implementation is itself a research contribution: it allows comparison of both approaches and demonstrates the trade-offs between OT-based and pure-CRDT architectures for document-oriented editing. See Section 5.1 for a detailed comparison.
+> **Note on the two CRDT approaches**: The two repositories implement different CRDT strategies. The core engine (`mywebnicek-core`) uses a custom OT-based event DAG with path-based selectors — a direct descendant of the original Denicek paper's architecture. The web application (`mywebnicek`) uses Loro CRDTs with ID-addressed nodes — the approach originally prescribed by the project specification. This dual implementation is itself a research contribution: it allows comparison of both approaches and demonstrates the trade-offs between OT-based and pure-CRDT architectures for document-oriented editing. See Section 5.1 for a detailed comparison.
 
 ### 3.2 Technology Stack
 
-| Component | mydenicek-core | MyDenicek (UI) |
+| Component | mywebnicek-core | mywebnicek (UI) |
 |---|---|---|
 | **Runtime** | Deno 2.x | Node.js (npm workspaces) |
 | **Language** | TypeScript (strict) | TypeScript ~5.9.3 (strict) |
@@ -98,7 +98,7 @@ A React 19 monorepo that provides a polished collaborative document editor. It u
 
 ### 4.1 CRDT Approach: OT-based Event DAG
 
-The `mydenicek-core` engine achieves strong eventual consistency through three mechanisms:
+The `mywebnicek-core` engine achieves strong eventual consistency through three mechanisms:
 
 1. **Causal DAG with vector clocks**: Each event stores a `VectorClock` — a `Record<string, number>` mapping peer IDs to sequence numbers. The clock's `dominates(other)` method determines causal ordering: if `A.clock.dominates(B.clock)`, then A happened after B. Two events are concurrent if neither clock dominates the other.
 
@@ -145,7 +145,7 @@ The `Selector` class (`core/selector.ts`) parses paths, matches prefixes (accoun
 
 ### 4.3 Component Architecture
 
-#### Core Library (`mydenicek-core`)
+#### Core Library (`mywebnicek-core`)
 
 ```
 packages/core/
@@ -194,10 +194,10 @@ packages/sync-server/
 └── tests/         # Sync protocol tests
 ```
 
-#### React Integration (`@mydenicek/react` in MyDenicek repo)
+#### React Integration (`@mydenicek/react` in mywebnicek repo)
 
 ```
-packages/mydenicek-react/
+packages/mywebnicek-react/
 ├── src/
 │   ├── DenicekProvider.tsx    # React context provider
 │   ├── useDenicekDocument.ts  # Document read/write hooks
@@ -206,7 +206,7 @@ packages/mydenicek-react/
 │   └── constants.ts           # Shared constants
 ```
 
-#### Web Application (`mywebnicek` in MyDenicek repo)
+#### Web Application (`mywebnicek` in mywebnicek repo)
 
 ```
 apps/mywebnicek/
@@ -217,7 +217,7 @@ apps/mywebnicek/
 
 ### 4.4 Specification Divergence
 
-The original project specification prescribed Loro CRDTs as the synchronization substrate. The `mydenicek-core` implementation diverged to a custom OT-based event DAG. Key divergences:
+The original project specification prescribed Loro CRDTs as the synchronization substrate. The `mywebnicek-core` implementation diverged to a custom OT-based event DAG. Key divergences:
 
 | Aspect | Specification | Implementation | Justification |
 |---|---|---|---|
@@ -229,7 +229,7 @@ The original project specification prescribed Loro CRDTs as the synchronization 
 | **Dependencies** | Loro (2 MB WASM) | Zero external CRDT deps | Pure TypeScript; no WASM compatibility concerns |
 | **Package registry** | npm | JSR | Deno-native registry with first-class TypeScript support |
 
-The MyDenicek web application repository still uses Loro CRDTs, making it possible to compare both approaches empirically. See the [specification divergence document](https://github.com/krsion/mydenicek-core/blob/main/docs/specification-divergence.md) for a requirement-by-requirement mapping.
+The mywebnicek web application repository still uses Loro CRDTs, making it possible to compare both approaches empirically. See the [specification divergence document](https://github.com/krsion/mywebnicek-core/blob/main/docs/specification-divergence.md) for a requirement-by-requirement mapping.
 
 ---
 
@@ -279,15 +279,15 @@ Examples of structural conflict resolution:
 
 ### 5.4 Compound Operation Decomposition
 
-A key design insight (documented in detail in [`docs/design/compound-operation-decomposition.md`](https://github.com/krsion/MyDenicek/blob/main/docs/design/compound-operation-decomposition.md)) is that **compound operations cannot be atomic in local-first software**.
+A key design insight (documented in detail in [`docs/design/compound-operation-decomposition.md`](https://github.com/krsion/mywebnicek/blob/main/docs/design/compound-operation-decomposition.md)) is that **compound operations cannot be atomic in local-first software**.
 
 The "wrap" operation illustrates this: `wrap(X, tag)` is secretly `add(wrapper) + move(X, wrapper)`. When two peers concurrently wrap the same node, both wrappers are created (creates never conflict) but only one move wins (LWW). The losing peer's wrapper becomes an empty orphan. This orphan is **observationally indistinguishable** from a legitimately created empty node, making automatic cleanup impossible.
 
 This impossibility follows from the **CAP theorem**: local-first software requires partition tolerance and availability (AP), but transactions require strong consistency (CP). By the **CALM theorem**, detecting transaction failure requires coordination (non-monotonic reasoning), which is unavailable during partitions.
 
-**Solution in mydenicek-core**: Wrap operations (`wrapRecord`, `wrapList`) are implemented as single atomic events that create the wrapper and reparent the child in one step within the event DAG. The OT rules handle concurrent wraps explicitly. This works because the OT layer can reason about the combined structural change, unlike a CRDT that must decompose into independent operations.
+**Solution in mywebnicek-core**: Wrap operations (`wrapRecord`, `wrapList`) are implemented as single atomic events that create the wrapper and reparent the child in one step within the event DAG. The OT rules handle concurrent wraps explicitly. This works because the OT layer can reason about the combined structural change, unlike a CRDT that must decompose into independent operations.
 
-**Solution in MyDenicek (UI)**: Wrap is decomposed into explicit `addChild` + `move` primitives. The user performs two visible steps, making the conflict behavior transparent.
+**Solution in mywebnicek (UI)**: Wrap is decomposed into explicit `addChild` + `move` primitives. The user performs two visible steps, making the conflict behavior transparent.
 
 ### 5.5 Formula Engine
 
@@ -517,7 +517,7 @@ Run with: `deno run packages/core/tools/core-random-fuzzer.ts`
 
 ### 7.5 E2E Tests (Playwright)
 
-The MyDenicek web application has 5 Playwright test files in `apps/mywebnicek/tests/`:
+The mywebnicek web application has 5 Playwright test files in `apps/mywebnicek/tests/`:
 
 | File | Coverage |
 |---|---|
@@ -527,7 +527,7 @@ The MyDenicek web application has 5 Playwright test files in `apps/mywebnicek/te
 | `named_params.spec.ts` | Named parameter functionality |
 | `history_debug.spec.ts` | History debugging interface |
 
-Configuration: tests run against `http://localhost:5174/MyDenicek/` on Chromium, Firefox, and WebKit. In CI, tests run sequentially with 2 retries; locally, they run in parallel.
+Configuration: tests run against `http://localhost:5174/mywebnicek/` on Chromium, Firefox, and WebKit. In CI, tests run sequentially with 2 retries; locally, they run in parallel.
 
 ---
 
@@ -535,12 +535,12 @@ Configuration: tests run against `http://localhost:5174/MyDenicek/` on Chromium,
 
 ### 8.1 Local Development Setup
 
-**mydenicek-core** (Deno):
+**mywebnicek-core** (Deno):
 
 ```bash
 # Clone the repository
-git clone https://github.com/krsion/mydenicek-core.git
-cd mydenicek-core
+git clone https://github.com/krsion/mywebnicek-core.git
+cd mywebnicek-core
 
 # Install dependencies (Deno auto-manages, but for npm compat packages):
 deno install
@@ -562,12 +562,12 @@ deno task random-fuzzer
 deno task sync-server
 ```
 
-**MyDenicek** (Node.js):
+**mywebnicek** (Node.js):
 
 ```bash
 # Clone the repository
-git clone https://github.com/krsion/MyDenicek.git
-cd MyDenicek
+git clone https://github.com/krsion/mywebnicek.git
+cd mywebnicek
 
 # Install dependencies:
 npm ci
@@ -590,17 +590,17 @@ npm run test -w mywebnicek             # E2E tests (Playwright)
 
 ### 8.2 Azure Deployment
 
-**Sync server** (mydenicek-core): Deployed via `deno run --allow-net --allow-read --allow-write --allow-env apps/sync-server/main.ts`. Supports optional file-based persistence via `--persistence-path`.
+**Sync server** (mywebnicek-core): Deployed via `deno run --allow-net --allow-read --allow-write --allow-env apps/sync-server/main.ts`. Supports optional file-based persistence via `--persistence-path`.
 
-**Sync server** (MyDenicek): Deployed to Azure App Service (`mydenicek-sync-prod.azurewebsites.net`). Uses Azure Blob Storage for event persistence. Deployment is triggered by changes to `apps/mydenicek-sync-server/` or manual dispatch.
+**Sync server** (mywebnicek): Deployed to Azure App Service (`mywebnicek-sync-prod.azurewebsites.net`). Uses Azure Blob Storage for event persistence. Deployment is triggered by changes to `apps/mywebnicek-sync-server/` or manual dispatch.
 
-**Web application**: Deployed to GitHub Pages at `https://krsion.github.io/MyDenicek/`. Live demo connects to the Azure sync server via `wss://mydenicek-sync-prod.azurewebsites.net`.
+**Web application**: Deployed to GitHub Pages at `https://krsion.github.io/mywebnicek/`. Live demo connects to the Azure sync server via `wss://mywebnicek-sync-prod.azurewebsites.net`.
 
 ### 8.3 CI/CD Pipelines
 
-**mydenicek-core**: Uses Deno's built-in task runner. CI runs `deno task fmt:check`, `deno task check`, `deno task test`, and `deno task build`.
+**mywebnicek-core**: Uses Deno's built-in task runner. CI runs `deno task fmt:check`, `deno task check`, `deno task test`, and `deno task build`.
 
-**MyDenicek** has 4 GitHub Actions workflows:
+**mywebnicek** has 4 GitHub Actions workflows:
 
 | Workflow | Trigger | Steps |
 |---|---|---|

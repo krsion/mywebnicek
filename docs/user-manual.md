@@ -1,6 +1,6 @@
 # User Manual
 
-**Project**: MyDenicek — Local-first Collaborative Document Editor
+**Project**: mywebnicek — Local-first Collaborative Document Editor
 **Author**: Bc. Ondřej Krsička
 **Supervisor**: Mgr. Tomáš Petříček, Ph.D.
 
@@ -8,7 +8,7 @@
 
 ## 1. Introduction
 
-MyDenicek is a local-first collaborative document editor for structured, tree-based documents. It allows you to build and edit documents composed of nested HTML-like elements, text values, formulas, references, and programmable action buttons — all synchronized in real time between collaborators using CRDTs (Conflict-free Replicated Data Types).
+mywebnicek is a local-first collaborative document editor for structured, tree-based documents. It allows you to build and edit documents composed of nested HTML-like elements, text values, formulas, references, and programmable action buttons — all synchronized in real time between collaborators using CRDTs (Conflict-free Replicated Data Types).
 
 Key features:
 
@@ -26,7 +26,7 @@ Key features:
 
 Open the live demo in your browser:
 
-> **<https://krsion.github.io/MyDenicek/>**
+> **<https://krsion.github.io/mywebnicek/>**
 
 No installation is required. The application runs entirely in the browser and automatically connects to the sync server for collaboration.
 
@@ -42,8 +42,8 @@ If you want to run the application on your own machine:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/krsion/MyDenicek.git
-   cd MyDenicek
+   git clone https://github.com/krsion/mywebnicek.git
+   cd mywebnicek
    ```
 2. Install dependencies:
    ```bash
@@ -228,7 +228,7 @@ The copy creates a new node linked to the original source via a `sourceId`, so t
 
 ## 5. Undo & Redo
 
-MyDenicek supports full undo and redo:
+mywebnicek supports full undo and redo:
 
 - **Undo**: Click the ↶ button in the toolbar or press **Ctrl+Z**.
 - **Redo**: Click the ↷ button in the toolbar or press **Ctrl+Y**.
@@ -243,7 +243,7 @@ Up to 100 undo steps are stored. Undo only affects your own local changes — it
 
 ### 6.1 Connecting to a Sync Server
 
-MyDenicek automatically connects to the sync server when you open the application. The connection status is shown in the top-right of the toolbar:
+mywebnicek automatically connects to the sync server when you open the application. The connection status is shown in the top-right of the toolbar:
 
 - **Synced** (green badge) — Connected and synchronized. Shows round-trip latency (e.g., "Synced (42ms)").
 - **Connecting** (yellow badge with spinner) — Connection attempt in progress.
@@ -254,7 +254,7 @@ You can toggle sync on/off using the **switch** next to the status indicator.
 
 ### 6.2 Sharing and Real-time Collaboration
 
-Each document session has a unique **room ID** embedded in the URL hash (e.g., `https://krsion.github.io/MyDenicek/#abc12345`).
+Each document session has a unique **room ID** embedded in the URL hash (e.g., `https://krsion.github.io/mywebnicek/#abc12345`).
 
 To collaborate:
 1. Click the **Share** button in the toolbar — the URL is copied to your clipboard.
@@ -267,7 +267,7 @@ Changes are synchronized in real time. When a collaborator selects a node, you c
 
 ### 6.3 Conflict Resolution
 
-Because MyDenicek uses CRDTs (specifically the Loro library), conflicts are resolved automatically and deterministically. All peers converge to the same document state regardless of the order in which they receive changes.
+Because mywebnicek uses CRDTs (specifically the Loro library), conflicts are resolved automatically and deterministically. All peers converge to the same document state regardless of the order in which they receive changes.
 
 Specific resolution behaviors:
 
@@ -284,7 +284,7 @@ Specific resolution behaviors:
 
 ## 7. Recording & Replay
 
-MyDenicek records every editing action you perform and displays them in the **Actions Panel** on the right side of the screen. This enables **programming by demonstration** — you can replay recorded actions to automate repetitive edits.
+mywebnicek records every editing action you perform and displays them in the **Actions Panel** on the right side of the screen. This enables **programming by demonstration** — you can replay recorded actions to automate repetitive edits.
 
 ### 7.1 How Recording Works
 
@@ -411,7 +411,7 @@ When joining an existing room via a shared link, the app waits up to 1 second fo
 
 - Check the status indicator in the top-right corner. If it says "Offline" or "Disconnected", toggle the sync switch off and on.
 - Ensure you and your collaborator are using the same URL (same room ID in the hash).
-- The sync server at `wss://mydenicek-sync-prod.azurewebsites.net` must be reachable. Corporate firewalls may block WebSocket connections.
+- The sync server at `wss://mywebnicek-sync-prod.azurewebsites.net` must be reachable. Corporate firewalls may block WebSocket connections.
 
 ### Undo doesn't revert a collaborator's change
 

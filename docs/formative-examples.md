@@ -1,6 +1,6 @@
 # Formative Examples
 
-**Project**: MyDenicek
+**Project**: mywebnicek
 **Author**: Bc. Ondřej Krsička
 **Supervisor**: Mgr. Tomáš Petříček, Ph.D.
 **Institution**: Charles University, Faculty of Mathematics and Physics
@@ -9,7 +9,7 @@
 
 ## Introduction
 
-MyDenicek is a local-first collaborative document editor built on a custom CRDT
+mywebnicek is a local-first collaborative document editor built on a custom CRDT
 (Conflict-free Replicated Data Type). The core package, `@mydenicek/core`
 (published on JSR), models documents as **tagged trees** composed of four node
 types: **records**, **lists**, **primitives**, and **references**.
