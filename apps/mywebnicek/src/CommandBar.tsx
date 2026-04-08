@@ -670,7 +670,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
           />
           {ghostText && (
             <span style={styles.ghost}>
-              {input}{ghostText}
+              <span style={{ visibility: "hidden" }}>{input}</span>{ghostText}
             </span>
           )}
         </div>
