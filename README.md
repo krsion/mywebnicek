@@ -1,74 +1,49 @@
-# MyDenicek: Local-first Software Implementation
+# MyDenicek: Local-First Collaborative Document Editor
 
-- **Specification:** [View PDF](https://github.com/krsion/MyDenicek/blob/main/specification/specification.pdf)
-- **Research Project Proposal:** [View PDF](https://github.com/krsion/MyDenicek/blob/main/proposal/proposal.pdf)
-- **Live Demo:** [Launch App](https://krsion.github.io/MyDenicek/)
-- **Sync Server:** `wss://mydenicek-sync-prod.azurewebsites.net` (Azure App Service)
+**Author**: Bc. Ondřej Krsička  
+**Supervisor**: Mgr. Tomáš Petříček, Ph.D.  
+**Course**: NPRG070 — Research Project, Charles University, Faculty of Mathematics and Physics
 
-## Project Overview
+## About
 
-MyDenicek is a local-first collaborative document editor using **Loro CRDTs** for synchronization. It is a monorepo with npm workspaces containing a React web app, core libraries, and a sync server. The project builds upon the concepts from the original [Denicek](https://dl.acm.org/doi/10.1145/3746059.3747646) system, replacing Operational Transformation with CRDTs for more robust conflict resolution.
+MyDenicek is a **local-first collaborative document editor** for tagged document trees. It builds on the concepts from the original [Denicek](https://tomasp.net/academic/papers/denicek/) system by Tomáš Petříček, which introduced a computational substrate for document-oriented end-user programming.
 
-**Online collaboration is live!** Open the [demo](https://krsion.github.io/MyDenicek/) in multiple browser windows to collaborate in real-time. Changes sync automatically via WebSocket.
+The core research contribution is a **custom OT-based CRDT** that uses an event DAG with vector clocks and operational transformation of selector paths to achieve strong eventual consistency. Unlike the original Denicek (which used path-based OT without replication), MyDenicek is designed from the ground up for real-time multi-peer collaboration with automatic conflict resolution.
 
-## Internal State Representation
+The project is split across two repositories: this one contains the **web application** (React 19 + Fluent UI), sync server, and all documentation, while the core CRDT engine lives in [mydenicek-core](https://github.com/krsion/mydenicek-core) and is published on JSR as [`@mydenicek/core`](https://jsr.io/@mydenicek/core).
 
-The application is built on **Loro**, which synchronizes tree-structured state using Conflict-free Replicated Data Types (CRDTs).
+## Live Demo
 
-### DenicekDocument Read API
+- **Web Application**: https://krsion.github.io/MyDenicek/
+- **Sync Server**: `wss://mydenicek-sync-prod.azurewebsites.net`
 
-The `DenicekDocument` class provides read-only access to the document tree:
+Open in multiple browser tabs or windows to collaborate in real-time. Changes sync automatically via WebSocket.
 
-```typescript
-class DenicekDocument {
-  // Read-only API
-  getRootId(): string | null;
-  getNode(id: string): NodeData | null;
-  getChildIds(parentId: string): string[];
-  getParentId(nodeId: string): string | null;
-  getAllNodes(): Record<string, NodeData>;
-  getSnapshot(): Snapshot;
-}
-```
+## Documentation
 
-### NodeData Types
+- [Technical Documentation](docs/tech-docs.md) — architecture, CRDT design, implementation details
+- [User Manual](docs/user-manual.md) — getting started, features, keyboard shortcuts
+- [Formative Examples](docs/formative-examples.md) — worked examples demonstrating the CRDT core
 
-Nodes returned by `getNode()` contain only the node's own data (no children array):
+## Project Structure
 
-```typescript
-interface ElementNodeData {
-  id: string;
-  kind: "element";
-  tag: string;
-  attrs: Record<string, unknown>;
-}
+### Repositories
 
-interface ValueNodeData {
-  id: string;
-  kind: "value";
-  value: string;
-}
+- **[MyDenicek](https://github.com/krsion/MyDenicek)** (this repo) — React 19 + Fluent UI web application, sync server, documentation
+- **[mydenicek-core](https://github.com/krsion/mydenicek-core)** — Core CRDT engine published on JSR as `@mydenicek/core`
 
-type NodeData = ElementNodeData | ValueNodeData;
-```
+### Architecture
 
-To get children, use `doc.getChildIds(parentId)` instead of direct property access.
-
-## Architecture
-
-### Package Structure
 ```
 apps/
-  mywebnicek/                 # React 19 + Fluent UI web app
-  mydenicek-sync-server/      # WebSocket sync server (Loro)
+  mywebnicek/                    # React 19 + Fluent UI web app
+  mydenicek-sync-server/         # WebSocket sync server (Loro)
 packages/
-  mydenicek-core/          # Core CRDT logic (Loro wrapper)
-  mydenicek-react/         # React hooks/context
-  mydenicek-mcp/              # MCP integration
-  mydenicek-integration-tests/ # Cross-package integration tests
+  mydenicek-core/                # Core CRDT logic (Loro wrapper)
+  mydenicek-react/               # React hooks/context
+  mydenicek-mcp/                 # MCP integration
+  mydenicek-integration-tests/   # Cross-package integration tests
 ```
-
-### Core Architecture Layers
 
 **DenicekDocument** (`packages/mydenicek-core/src/DenicekDocument.ts`)
 - Entry point for all document operations
@@ -78,6 +53,19 @@ packages/
 **DenicekModel** (`packages/mydenicek-core/src/DenicekModel.ts`)
 - Facade for read/write operations, created inside `change()` callbacks
 - Delegates to: NodeReader, NodeWriter, NodeCreator, NodeWrapper, SelectionLogic
+
+## References
+
+### Original Denicek Paper
+
+- Petříček, T. "Denicek: Computational Substrate for Document-Oriented End-User Programming." UIST 2025.
+- DOI: https://doi.org/10.1145/3746059.3747646
+- Project page: https://tomasp.net/academic/papers/denicek/
+
+### Specification & Proposal
+
+- [Specification PDF](specification/specification.pdf)
+- [Project Proposal PDF](proposal/proposal.pdf)
 
 ## Design Decisions & Considerations
 
@@ -174,30 +162,7 @@ npm test -w @mydenicek/core         # Core unit tests (Vitest)
 npm run test -w mywebnicek             # E2E tests (Playwright)
 ```
 
-## TODO
-
-### High Priority
-
-| Task | Details |
-|------|---------|
-| Complete E2E test coverage | Missing: keyboard navigation, attribute editing, delete confirmation, cut/paste move |
-
-### Medium Priority
-
-| Task | Details |
-|------|---------|
-| Implement remote selection visualization | `useSelection.ts:36` has stubs for `remoteSelections`/`userId` |
-| Add Snapshot View UI | `document.getSnapshot()` exists but not exposed in UI (FR-19) |
-| Generate API documentation | No generated docs for public APIs (NFR-09) |
-
-### Low Priority
-
-| Task | Details |
-|------|---------|
-| Add stress tests for large documents | Performance under load untested |
-| Consolidate generalization logic | Duplicated in `scriptAnalysis.ts` and `App.tsx` |
-| Add deployment guide for sync server | Missing from docs |
-### Implementation Status
+## Implementation Status
 
 ```
 Core Library (FR-01 to FR-13):     13/13 fully implemented
