@@ -173,17 +173,9 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
   const [ghostText, setGhostText] = useState("");
 
   const inputRef = useRef<HTMLInputElement>(null);
-  const outputRef = useRef<HTMLDivElement>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
-  // Focus input on mount
   useEffect(() => { inputRef.current?.focus(); }, []);
-
-  // Scroll output to bottom
-  useEffect(() => {
-    if (outputRef.current) {
-      outputRef.current.scrollTop = outputRef.current.scrollHeight;
-    }
-  }, [output]);
 
   // Materialize tree
   const tree = useMemo(() => {
@@ -516,20 +508,25 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
   // ── Render ─────────────────────────────────────────────────────────────
 
+  const lastMessage = output.length > 0 ? output[output.length - 1] : null;
+
   return (
     <div style={styles.container} onClick={() => inputRef.current?.focus()}>
-      {/* Output from last command */}
-      {output.length > 0 && (
-        <div ref={outputRef} style={styles.outputArea}>
-          {output.slice(-5).map((msg, i) => (
-            <pre key={i} style={{ ...styles.outputLine, color: msgColor(msg.kind) }}>
-              {msg.text}
-            </pre>
-          ))}
+      {/* Help overlay */}
+      {showHelp && (
+        <div style={styles.helpOverlay}>
+          <pre style={styles.helpText}>{HELP_TEXT}</pre>
         </div>
       )}
 
-      {/* Input with ghost completion */}
+      {/* Last output message */}
+      {lastMessage && (
+        <div style={{ padding: "2px 12px", fontSize: 12, color: msgColor(lastMessage.kind), fontFamily: FONT, whiteSpace: "pre-wrap", overflow: "hidden", maxHeight: 60 }}>
+          {lastMessage.text}
+        </div>
+      )}
+
+      {/* Input row */}
       <div style={styles.inputRow}>
         <span style={styles.prompt}>{">"}</span>
         <div style={styles.inputWrapper}>
@@ -541,7 +538,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
             style={styles.input}
             spellCheck={false}
             autoComplete="off"
-            placeholder="Type a command (tab to complete, help for list)"
+            placeholder="Type a command (tab to complete)"
           />
           {ghostText && (
             <span style={styles.ghost}>
@@ -549,6 +546,13 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
             </span>
           )}
         </div>
+        <button
+          onClick={(e) => { e.stopPropagation(); setShowHelp(v => !v); }}
+          style={styles.helpButton}
+          title="Show command help"
+        >
+          ?
+        </button>
       </div>
     </div>
   );
@@ -588,41 +592,21 @@ const FONT = "Consolas, Monaco, 'Courier New', monospace";
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    display: "flex",
-    flexDirection: "column",
-    height: "100%",
     background: "#1e1e1e",
+    borderTop: "1px solid #333",
     color: "#d4d4d4",
     fontFamily: FONT,
     fontSize: 13,
-    justifyContent: "flex-end",
-  },
-  outputArea: {
-    flex: "0 1 auto",
-    maxHeight: 200,
-    overflowY: "auto",
-    padding: "8px 12px 0",
-  },
-  outputLine: {
-    margin: 0,
-    padding: "1px 0",
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-    fontFamily: FONT,
-    fontSize: 13,
-    lineHeight: 1.4,
+    flexShrink: 0,
   },
   inputRow: {
     display: "flex",
     alignItems: "center",
     padding: "6px 12px",
-    borderTop: "1px solid #333",
-    borderBottom: "1px solid #333",
-    flexShrink: 0,
+    gap: 8,
   },
   prompt: {
     color: "#569cd6",
-    marginRight: 8,
     fontWeight: "bold",
     fontSize: 14,
     userSelect: "none",
@@ -653,5 +637,35 @@ const styles: Record<string, React.CSSProperties> = {
     pointerEvents: "none",
     whiteSpace: "pre",
     zIndex: 0,
+  },
+  helpButton: {
+    background: "transparent",
+    border: "1px solid #555",
+    borderRadius: 4,
+    color: "#888",
+    fontFamily: FONT,
+    fontSize: 12,
+    width: 24,
+    height: 24,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  helpOverlay: {
+    padding: "8px 12px",
+    borderBottom: "1px solid #333",
+    background: "#252526",
+    maxHeight: 200,
+    overflowY: "auto" as const,
+  },
+  helpText: {
+    margin: 0,
+    fontFamily: FONT,
+    fontSize: 12,
+    color: "#d4d4d4",
+    whiteSpace: "pre-wrap",
+    lineHeight: 1.5,
   },
 };
