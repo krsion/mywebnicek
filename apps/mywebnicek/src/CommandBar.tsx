@@ -117,14 +117,37 @@ function navigateTo(root: PlainNode, segments: string[]): PlainNode | undefined 
 
 const META_KEYS = new Set(["$tag", "$id", "$kind", "$order"]);
 
-function getChildKeys(node: PlainNode): string[] {
-  if (isPlainRecord(node)) {
-    return Object.keys(node).filter(k => !META_KEYS.has(k) && isPlainRecord(node[k]!));
+interface CompletionItem {
+  name: string;
+  label: string; // display text with type info
+}
+
+function getChildCompletions(node: PlainNode): CompletionItem[] {
+  if (!isPlainRecord(node)) return [];
+  const items: CompletionItem[] = [];
+  for (const key of Object.keys(node)) {
+    if (META_KEYS.has(key)) continue;
+    const child = node[key];
+    if (child === undefined) continue;
+    if (isPlainRecord(child)) {
+      const kind = child["$kind"] as string | undefined;
+      const tag = child["$tag"] as string;
+      if (kind === "value") {
+        const val = child["value"];
+        const display = typeof val === "string" ? `"${val.length > 20 ? val.slice(0, 20) + "…" : val}"` : String(val);
+        items.push({ name: key, label: `${key} = ${display}` });
+      } else if (kind === "ref") {
+        items.push({ name: key, label: `${key} → ${child["target"]}` });
+      } else if (kind === "formula") {
+        items.push({ name: key, label: `${key} ƒ(${child["operation"]})` });
+      } else if (kind === "action") {
+        items.push({ name: key, label: `${key} ▶ "${child["label"]}"` });
+      } else {
+        items.push({ name: key, label: `${key} {${tag}}` });
+      }
+    }
   }
-  if (isPlainList(node)) {
-    return node.$items.map((_, i) => String(i));
-  }
-  return [];
+  return items;
 }
 
 // ── Parse value argument — try JSON first, fall back to string ──────────
@@ -175,7 +198,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [output, setOutput] = useState<OutputMessage[]>([]);
   const [ghostText, setGhostText] = useState("");
-  const [completions, setCompletions] = useState<string[]>([]);
+  const [completions, setCompletions] = useState<CompletionItem[]>([]);
   const [completionIdx, setCompletionIdx] = useState(-1);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -202,21 +225,19 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
   // ── Path completion ─────────────────────────────────────────────────────
 
-  /** Get the children names available at the current path being typed. */
-  const getPathCompletions = useCallback((text: string): { items: string[]; prefix: string } => {
+  /** Get the children available at the current path being typed. */
+  const getPathCompletions = useCallback((text: string): { items: CompletionItem[]; prefix: string } => {
     const parts = text.split(/\s+/);
     if (parts.length <= 1) {
       const partial = parts[0] ?? "";
-      return { items: COMMANDS.filter(c => c.startsWith(partial) && c !== partial), prefix: "" };
+      return { items: COMMANDS.filter(c => c.startsWith(partial) && c !== partial).map(c => ({ name: c, label: c })), prefix: "" };
     }
     const selectorArg = parts[1] ?? "";
     if (!tree || !isPlainRecord(tree)) return { items: [], prefix: "" };
 
-    // User root is at tree["root"]
     const userRoot = tree["root"];
     if (!userRoot || !isPlainRecord(userRoot)) return { items: [], prefix: "" };
 
-    // Paths start with "/" — strip it for navigation
     const pathStr = selectorArg.startsWith("/") ? selectorArg.slice(1) : selectorArg;
     const segments = pathStr.split("/");
     const parentSegments = segments.slice(0, -1);
@@ -225,10 +246,9 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     const parentNode = parentSegments.length === 0 ? userRoot : navigateTo(userRoot, parentSegments);
     if (!parentNode) return { items: [], prefix: "" };
 
-    const keys = getChildKeys(parentNode).filter(k => k.startsWith(partial));
-    // Rebuild the prefix with "/" notation
+    const all = getChildCompletions(parentNode).filter(c => c.name.startsWith(partial));
     const prefix = "/" + (parentSegments.length > 0 ? parentSegments.join("/") + "/" : "");
-    return { items: keys, prefix };
+    return { items: all, prefix };
   }, [tree]);
 
   /** Apply a selected completion item to the input. */
@@ -254,14 +274,14 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
   /** Update completions list and ghost text when input changes. */
   const updateCompletions = useCallback((text: string) => {
-    const { items, prefix: _prefix } = getPathCompletions(text);
+    const { items } = getPathCompletions(text);
     const parts = text.split(/\s+/);
     const partial = parts.length <= 1
       ? (parts[0] ?? "")
       : (parts[1] ?? "").split("/").pop() ?? "";
 
-    if (items.length === 1 && items[0] !== partial) {
-      setGhostText(items[0]!.slice(partial.length));
+    if (items.length === 1 && items[0]!.name !== partial) {
+      setGhostText(items[0]!.name.slice(partial.length));
       setCompletions([]);
     } else if (items.length > 1) {
       setCompletions(items);
@@ -275,14 +295,13 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
 
   const handleTab = useCallback(() => {
     if (completions.length > 0) {
-      // Select current or first item
       const idx = completionIdx >= 0 ? completionIdx : 0;
-      applyCompletion(completions[idx]!);
+      applyCompletion(completions[idx]!.name);
       return;
     }
     const { items } = getPathCompletions(input);
     if (items.length === 1) {
-      applyCompletion(items[0]!);
+      applyCompletion(items[0]!.name);
     } else if (items.length > 1) {
       setCompletions(items);
       setCompletionIdx(0);
@@ -501,7 +520,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     if (e.key === "Enter") {
       e.preventDefault();
       if (completions.length > 0 && completionIdx >= 0) {
-        applyCompletion(completions[completionIdx]!);
+        applyCompletion(completions[completionIdx]!.name);
         return;
       }
       executeCommand(input);
@@ -590,8 +609,8 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
         }}>
           {completions.map((item, i) => (
             <div
-              key={item}
-              onClick={() => applyCompletion(item)}
+              key={item.name}
+              onClick={() => applyCompletion(item.name)}
               style={{
                 padding: "3px 12px 3px 28px",
                 fontFamily: FONT,
@@ -602,7 +621,7 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
                 borderLeft: i === completionIdx ? "3px solid #0078d4" : "3px solid transparent",
               }}
             >
-              {item}
+              {item.label}
             </div>
           ))}
         </div>
