@@ -123,7 +123,17 @@ export class DenicekDocument {
     }
 
     updateAttribute(nodeIds: string[], key: string, value: unknown | undefined): void {
-        this.adapter.updateAttribute(nodeIds, key, value);
+        // Denicek records only accept primitive attribute values.
+        // Serialize non-primitive values to JSON strings.
+        let primitiveValue: string | number | boolean | undefined;
+        if (value === undefined || value === null) {
+            primitiveValue = undefined;
+        } else if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+            primitiveValue = value;
+        } else {
+            primitiveValue = JSON.stringify(value);
+        }
+        this.adapter.updateAttribute(nodeIds, key, primitiveValue);
     }
 
     updateTag(nodeIds: string[], newTag: string): void {
