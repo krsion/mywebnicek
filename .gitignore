@@ -1,4 +1,4 @@
-# LaTeX auxiliary files produced in proposal/
+# LaTeX auxiliary files (proposal/, specification/)
 *.aux
 *.log
 *.out
@@ -7,26 +7,11 @@
 *.synctex.gz
 *.xmpi
 
-# Deno / Node
+# Deno
 node_modules/
 dist/
-
-# Build info
-*.tsbuildinfo
-
-# Playwright
-/test-results/
-/playwright-report/
-/blob-report/
-/playwright/.cache/
-/playwright/.auth/
+deno.lock
 
 # Editor
-.idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
 *.local

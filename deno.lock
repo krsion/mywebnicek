@@ -7,14 +7,10 @@
     "npm:@deno/vite-plugin@1": "1.0.6_vite@6.4.1",
     "npm:@fluentui/react-components@^9.72.7": "9.73.7_@types+react@19.2.14_@types+react-dom@19.2.3__@types+react@19.2.14_react@19.2.4_react-dom@19.2.4__react@19.2.4_scheduler@0.27.0",
     "npm:@types/react@^18.3.12": "18.3.28",
-    "npm:@uiw/react-json-view@^2.0.0-alpha.39": "2.0.0-alpha.41_@babel+runtime@7.29.2_react@19.2.4_react-dom@19.2.4__react@19.2.4",
     "npm:@vitejs/plugin-react@^5.1.0": "5.2.0_vite@6.4.1",
-    "npm:babel-plugin-react-compiler@^19.1.0-rc.3": "19.1.0-rc.1-rc-af1b7da-20250421",
     "npm:react-dom@^19.2.0": "19.2.4_react@19.2.4",
     "npm:react@19": "19.2.4",
     "npm:react@^19.2.0": "19.2.4",
-    "npm:vite-plugin-top-level-await@^1.6.0": "1.6.0_vite@6.4.1",
-    "npm:vite-plugin-wasm@^3.5.0": "3.6.0_vite@6.4.1",
     "npm:vite@*": "6.4.1",
     "npm:vite@^6.3.5": "6.4.1"
   },
@@ -1611,9 +1607,6 @@
     "@rolldown/pluginutils@1.0.0-rc.3": {
       "integrity": "sha512-eybk3TjzzzV97Dlj5c+XrBFW57eTNhzod66y9HrBlzJ6NsCrWCp/2kaPS3K9wJmurBC0Tdw4yPjXKZqlznim3Q=="
     },
-    "@rollup/plugin-virtual@3.0.2": {
-      "integrity": "sha512-10monEYsBp3scM4/ND4LNH5Rxvh3e/cVeL3jWTgZ2SrQ+BmUoQcopVQvnaMcOnykb1VkxUFuDAN+0FnpTFRy2A=="
-    },
     "@rollup/rollup-android-arm-eabi@4.60.0": {
       "integrity": "sha512-WOhNW9K8bR3kf4zLxbfg6Pxu2ybOUbB2AjMDHSQx86LIF4rH4Ft7vmMwNt0loO0eonglSNy4cpD3MKXXKQu0/A==",
       "os": ["android"],
@@ -1744,105 +1737,11 @@
       "os": ["win32"],
       "cpu": ["x64"]
     },
-    "@swc/core-darwin-arm64@1.15.24": {
-      "integrity": "sha512-uM5ZGfFXjtvtJ+fe448PVBEbn/CSxS3UAyLj3O9xOqKIWy3S6hPTXSPbszxkSsGDYKi+YFhzAsR4r/eXLxEQ0g==",
-      "os": ["darwin"],
-      "cpu": ["arm64"]
-    },
-    "@swc/core-darwin-x64@1.15.24": {
-      "integrity": "sha512-fMIb/Zfn929pw25VMBhV7Ji2Dl+lCWtUPNdYJQYOke+00E5fcQ9ynxtP8+qhUo/HZc+mYQb1gJxwHM9vty+lXg==",
-      "os": ["darwin"],
-      "cpu": ["x64"]
-    },
-    "@swc/core-linux-arm-gnueabihf@1.15.24": {
-      "integrity": "sha512-vOkjsyjjxnoYx3hMEWcGxQrMgnNrRm6WAegBXrN8foHtDAR+zpdhpGF5a4lj1bNPgXAvmysjui8cM1ov/Clkaw==",
-      "os": ["linux"],
-      "cpu": ["arm"]
-    },
-    "@swc/core-linux-arm64-gnu@1.15.24": {
-      "integrity": "sha512-h/oNu+upkXJ6Cicnq7YGVj9PkdfarLCdQa8l/FlHYvfv8CEiMaeeTnpLU7gSBH/rGxosM6Qkfa/J9mThGF9CLA==",
-      "os": ["linux"],
-      "cpu": ["arm64"]
-    },
-    "@swc/core-linux-arm64-musl@1.15.24": {
-      "integrity": "sha512-ZpF/pRe1guk6sKzQI9D1jAORtjTdNlyeXn9GDz8ophof/w2WhojRblvSDJaGe7rJjcPN8AaOkhwdRUh7q8oYIg==",
-      "os": ["linux"],
-      "cpu": ["arm64"]
-    },
-    "@swc/core-linux-ppc64-gnu@1.15.24": {
-      "integrity": "sha512-QZEsZfisHTSJlmyChgDFNmKPb3W6Lhbfo/O76HhIngfEdnQNmukS38/VSe1feho+xkV5A5hETyCbx3sALBZKAQ==",
-      "os": ["linux"],
-      "cpu": ["ppc64"]
-    },
-    "@swc/core-linux-s390x-gnu@1.15.24": {
-      "integrity": "sha512-DLdJKVsJgglqQrJBuoUYNmzm3leI7kUZhLbZGHv42onfKsGf6JDS3+bzCUQfte/XOqDjh/tmmn1DR/CF/tCJFw==",
-      "os": ["linux"],
-      "cpu": ["s390x"]
-    },
-    "@swc/core-linux-x64-gnu@1.15.24": {
-      "integrity": "sha512-IpLYfposPA/XLxYOKpRfeccl1p5dDa3+okZDHHTchBkXEaVCnq5MADPmIWwIYj1tudt7hORsEHccG5no6IUQRw==",
-      "os": ["linux"],
-      "cpu": ["x64"]
-    },
-    "@swc/core-linux-x64-musl@1.15.24": {
-      "integrity": "sha512-JHy3fMSc0t/EPWgo74+OK5TGr51aElnzqfUPaiRf2qJ/BfX5CUCfMiWVBuhI7qmVMBnk1jTRnL/xZnOSHDPLYg==",
-      "os": ["linux"],
-      "cpu": ["x64"]
-    },
-    "@swc/core-win32-arm64-msvc@1.15.24": {
-      "integrity": "sha512-Txj+qUH1z2bUd1P3JvwByfjKFti3cptlAxhWgmunBUUxy/IW3CXLZ6l6Gk4liANadKkU71nIU1X30Z5vpMT3BA==",
-      "os": ["win32"],
-      "cpu": ["arm64"]
-    },
-    "@swc/core-win32-ia32-msvc@1.15.24": {
-      "integrity": "sha512-15D/nl3XwrhFpMv+MADFOiVwv3FvH9j8c6Rf8EXBT3Q5LoMh8YnDnSgPYqw1JzPnksvsBX6QPXLiPqmcR/Z4qQ==",
-      "os": ["win32"],
-      "cpu": ["ia32"]
-    },
-    "@swc/core-win32-x64-msvc@1.15.24": {
-      "integrity": "sha512-PR0PlTlPra2JbaDphrOAzm6s0v9rA0F17YzB+XbWD95B4g2cWcZY9LAeTa4xll70VLw9Jr7xBrlohqlQmelMFQ==",
-      "os": ["win32"],
-      "cpu": ["x64"]
-    },
-    "@swc/core@1.15.24": {
-      "integrity": "sha512-5Hj8aNasue7yusUt8LGCUe/AjM7RMAce8ZoyDyiFwx7Al+GbYKL+yE7g4sJk8vEr1dKIkTRARkNIJENc4CjkBQ==",
-      "dependencies": [
-        "@swc/counter",
-        "@swc/types"
-      ],
-      "optionalDependencies": [
-        "@swc/core-darwin-arm64",
-        "@swc/core-darwin-x64",
-        "@swc/core-linux-arm-gnueabihf",
-        "@swc/core-linux-arm64-gnu",
-        "@swc/core-linux-arm64-musl",
-        "@swc/core-linux-ppc64-gnu",
-        "@swc/core-linux-s390x-gnu",
-        "@swc/core-linux-x64-gnu",
-        "@swc/core-linux-x64-musl",
-        "@swc/core-win32-arm64-msvc",
-        "@swc/core-win32-ia32-msvc",
-        "@swc/core-win32-x64-msvc"
-      ],
-      "scripts": true
-    },
-    "@swc/counter@0.1.3": {
-      "integrity": "sha512-e2BR4lsJkkRlKZ/qCHPw9ZaSxc0MVUd7gtbtaB7aMvHeJVYe8sOB8DBZkP2DtISHGSku9sCK6T6cnY0CtXrOCQ=="
-    },
     "@swc/helpers@0.5.21": {
       "integrity": "sha512-jI/VAmtdjB/RnI8GTnokyX7Ug8c+g+ffD6QRLa6XQewtnGyukKkKSk3wLTM3b5cjt1jNh9x0jfVlagdN2gDKQg==",
       "dependencies": [
         "tslib"
       ]
-    },
-    "@swc/types@0.1.26": {
-      "integrity": "sha512-lyMwd7WGgG79RS7EERZV3T8wMdmPq3xwyg+1nmAM64kIhx5yl+juO2PYIHb7vTiPgPCj8LYjsNV2T5wiQHUEaw==",
-      "dependencies": [
-        "@swc/counter"
-      ]
-    },
-    "@swc/wasm@1.15.24": {
-      "integrity": "sha512-vFjzOE8dhJcfeTbM4+HO9Qy58IINV0ysqStAgw81uds+KqCeUDM9huN+SZ5lWZ6U+5nf8VcZoEw5N81xMtAidg=="
     },
     "@types/babel__core@7.20.5": {
       "integrity": "sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==",
@@ -1898,14 +1797,6 @@
         "csstype"
       ]
     },
-    "@uiw/react-json-view@2.0.0-alpha.41_@babel+runtime@7.29.2_react@19.2.4_react-dom@19.2.4__react@19.2.4": {
-      "integrity": "sha512-botRpQ5AgymYEsqXSdT2/1LefAJEYfMntvdnx1SqhTQCTW9HygeFZXx9inkYqUmiQZ3+0QlZnodjBvwnUfZhVA==",
-      "dependencies": [
-        "@babel/runtime",
-        "react",
-        "react-dom"
-      ]
-    },
     "@vitejs/plugin-react@5.2.0_vite@6.4.1": {
       "integrity": "sha512-YmKkfhOAi3wsB1PhJq5Scj3GXMn3WvtQ/JC0xoopuHoXSdmtdStOpFrYaT1kie2YgFBcIe64ROzMYRjCrYOdYw==",
       "dependencies": [
@@ -1917,13 +1808,6 @@
         "react-refresh",
         "vite"
       ]
-    },
-    "babel-plugin-react-compiler@19.1.0-rc.1-rc-af1b7da-20250421": {
-      "integrity": "sha512-E3kaokBhWDLf7ZD8fuYjYn0ZJHYZ+3EHtAWCdX2hl4lpu1z9S/Xr99sxhx2bTCVB41oIesz9FtM8f4INsrZaOw==",
-      "dependencies": [
-        "@babel/types"
-      ],
-      "deprecated": true
     },
     "baseline-browser-mapping@2.10.12": {
       "integrity": "sha512-qyq26DxfY4awP2gIRXhhLWfwzwI+N5Nxk6iQi8EFizIaWIjqicQTE4sLnZZVdeKPRcVNoJOkkpfzoIYuvCKaIQ==",
@@ -2172,26 +2056,6 @@
         "react"
       ]
     },
-    "uuid@10.0.0": {
-      "integrity": "sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==",
-      "bin": true
-    },
-    "vite-plugin-top-level-await@1.6.0_vite@6.4.1": {
-      "integrity": "sha512-bNhUreLamTIkoulCR9aDXbTbhLk6n1YE8NJUTTxl5RYskNRtzOR0ASzSjBVRtNdjIfngDXo11qOsybGLNsrdww==",
-      "dependencies": [
-        "@rollup/plugin-virtual",
-        "@swc/core",
-        "@swc/wasm",
-        "uuid",
-        "vite"
-      ]
-    },
-    "vite-plugin-wasm@3.6.0_vite@6.4.1": {
-      "integrity": "sha512-mL/QPziiIA4RAA6DkaZZzOstdwbW5jO4Vz7Zenj0wieKWBlNvIvX5L5ljum9lcUX0ShNfBgCNLKTjNkRVVqcsw==",
-      "dependencies": [
-        "vite"
-      ]
-    },
     "vite@6.4.1": {
       "integrity": "sha512-+Oxm7q9hDoLMyJOYfUYBuHQo+dkAloi33apOPP56pzj+vsdJDzr+j1NISE5pyaAuKL4A3UD34qd0lx5+kfKp2g==",
       "dependencies": [
@@ -2217,13 +2081,9 @@
       "jsr:@mydenicek/react@0.2",
       "npm:@deno/vite-plugin@1",
       "npm:@fluentui/react-components@^9.72.7",
-      "npm:@uiw/react-json-view@^2.0.0-alpha.39",
       "npm:@vitejs/plugin-react@^5.1.0",
-      "npm:babel-plugin-react-compiler@^19.1.0-rc.3",
       "npm:react-dom@^19.2.0",
       "npm:react@^19.2.0",
-      "npm:vite-plugin-top-level-await@^1.6.0",
-      "npm:vite-plugin-wasm@^3.5.0",
       "npm:vite@^6.3.5"
     ]
   }

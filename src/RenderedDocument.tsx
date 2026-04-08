@@ -57,7 +57,7 @@ function renderNode(node: PlainNode, fieldName: string): React.ReactNode {
         return <span style={{ color: "#0078d4", textDecoration: "underline" }}>→ {String(node.target)}</span>;
     }
     if (kind === "action" || tag === "$action") {
-        return <button style={{ padding: "4px 12px", cursor: "pointer", margin: "2px" }}>
+        return <button type="button" style={{ padding: "4px 12px", cursor: "pointer", margin: "2px" }}>
             {String(node.label ?? "Action")}
         </button>;
     }

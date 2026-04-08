@@ -19,6 +19,9 @@ jobs:
       - name: Install dependencies
         run: deno install
 
+      - name: Lint
+        run: deno task lint
+
       - name: Build
         run: deno task build
 

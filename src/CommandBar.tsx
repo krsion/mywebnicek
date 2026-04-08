@@ -682,6 +682,7 @@ export function CommandBar({ dk }: CommandBarProps) {
           )}
         </div>
         <button
+          type="button"
           onClick={(e) => { e.stopPropagation(); setShowHelp(v => !v); }}
           style={styles.helpButton}
           title="Show command help"
