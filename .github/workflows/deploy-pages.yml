@@ -24,7 +24,7 @@ jobs:
 
       - name: Build Core
         run: |
-          npm run build -w packages/mydenicek-core
+          npm run build -w @mydenicek/document
 
       - name: Build
         working-directory: ./apps/mywebnicek
@@ -33,7 +33,7 @@ jobs:
 
       - name: Run Unit Tests
         run: |
-          npm run test -w packages/mydenicek-core
+          npm run test -w @mydenicek/document
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
