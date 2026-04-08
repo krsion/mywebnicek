@@ -1,5 +1,5 @@
 import { makeStyles, mergeClasses } from "@fluentui/react-components";
-import { type DenicekDocument, evaluateFormula, type GeneralizedPatch, getNodeValue, isFormulaError, type Operation } from "@mydenicek/core";
+import { type DenicekDocument, evaluateFormula, type GeneralizedPatch, getNodeValue, isFormulaError, type Operation } from "@mydenicek/document";
 import { DENICEK_NODE_ID_ATTR, type FormulaViewMode } from "@mydenicek/react";
 import React from "react";
 

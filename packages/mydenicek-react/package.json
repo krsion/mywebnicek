@@ -9,7 +9,7 @@
         "test": "vitest run --passWithNoTests"
     },
     "dependencies": {
-        "@mydenicek/core": "file:../mydenicek-core"
+        "@mydenicek/document": "file:../mydenicek-core"
     },
     "peerDependencies": {
         "react": ">=18.0.0"

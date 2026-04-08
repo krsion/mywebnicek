@@ -5,7 +5,7 @@
  * the end-user programming model of Denicek.
  */
 
-import type { DenicekDocument, GeneralizedPatch, NodeInput } from "@mydenicek/core";
+import type { DenicekDocument, GeneralizedPatch, NodeInput } from "@mydenicek/document";
 
 /** Shorthand for creating element nodes */
 const el = (tag: string) => ({ kind: "element" as const, tag, attrs: {}, children: [] });

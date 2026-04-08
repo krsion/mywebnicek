@@ -13,23 +13,12 @@ const PEER_ID_STORAGE_KEY = "mydenicek-peer-id";
  * This ensures the same user keeps the same peer ID across page refreshes,
  * which is essential for consistent peer identification in CRDT operations.
  */
-function getOrCreatePeerId(): bigint {
+function getOrCreatePeerId(): string {
   const stored = localStorage.getItem(PEER_ID_STORAGE_KEY);
-  if (stored) {
-    try {
-      return BigInt(stored);
-    } catch {
-      // Invalid stored value, generate new one
-    }
-  }
+  if (stored) return stored;
 
-  // Generate a random peer ID (similar to how Loro does it)
-  // Using crypto.getRandomValues for better randomness
-  const array = new BigUint64Array(1);
-  crypto.getRandomValues(array);
-  const newPeerId = array[0]!;
-
-  localStorage.setItem(PEER_ID_STORAGE_KEY, newPeerId.toString());
+  const newPeerId = crypto.randomUUID();
+  localStorage.setItem(PEER_ID_STORAGE_KEY, newPeerId);
   return newPeerId;
 }
 

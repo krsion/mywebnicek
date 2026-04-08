@@ -1,50 +1,35 @@
 /**
- * mydenicek-core
+ * @mydenicek/document
  *
- * Core document operations using Loro CRDT
- * No Loro types are exposed - all CRDT details are hidden
+ * Document abstraction layer backed by @mydenicek/core CRDT engine.
+ * No CRDT internals are exposed - all details are hidden behind DenicekDocument.
  */
 
 // Main classes
 export type { DenicekDocumentOptions, NodeInput, SyncOptions } from "./DenicekDocument.js";
 export { DenicekDocument } from "./DenicekDocument.js";
 
-
-
-
 // Types
 export type {
-    // Internal node types (for model operations)
-    ActionNode,
-    // Public node data types
     ActionNodeData,
-    ElementNode,
     ElementNodeData,
     FormulaContext,
     FormulaDocumentAccessor,
-    FormulaNode,
     FormulaNodeData,
-    // Patch types
     GeneralizedPatch,
     GroupedPatch,
     MapPatch,
-    Node,
     NodeData,
-    // Formula types
     Operation,
     OpId,
     PatchNodeData,
-    RefNode,
     RefNodeData,
-    // Snapshot for temporal comparisons
     Snapshot,
     SpliceInfo,
-    // Sync types
     SyncState,
     SyncStatus,
     TextPatch,
     TreePatch,
-    ValueNode,
     ValueNodeData,
     Version
 } from "./types.js";

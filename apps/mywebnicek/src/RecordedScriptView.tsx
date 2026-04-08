@@ -1,6 +1,6 @@
 import { Badge, Button, Card, CardHeader, Checkbox, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, Text, Tooltip } from "@fluentui/react-components";
 import { DeleteRegular, TargetRegular } from "@fluentui/react-icons";
-import { type GeneralizedPatch } from "@mydenicek/core";
+import { type GeneralizedPatch } from "@mydenicek/document";
 
 import { NodeId } from "./components/NodeId";
 import { usePeerAlias } from "./context/PeerAliasContext";

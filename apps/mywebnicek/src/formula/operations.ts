@@ -5,7 +5,7 @@
  * This follows the callback pattern - the engine is in core, operations are app-defined.
  */
 
-import type { FormulaContext, Operation } from "@mydenicek/core";
+import type { FormulaContext, Operation } from "@mydenicek/document";
 
 // =============================================================================
 // Type validation helpers

@@ -8,7 +8,7 @@
 import {
     DenicekDocument,
     type SyncState,
-} from "@mydenicek/core";
+} from "@mydenicek/document";
 import { createContext, type ReactNode, useEffect, useMemo, useState } from "react";
 
 // Context types
@@ -46,7 +46,7 @@ export interface DenicekProviderProps {
     /** Callback when document changes */
     onChange?: () => void;
     /** Optional peer ID for CRDT operations (should be persisted across sessions) */
-    peerId?: bigint;
+    peerId?: string;
 }
 
 /**
