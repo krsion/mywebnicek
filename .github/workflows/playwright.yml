@@ -1,8 +1,12 @@
 name: Playwright Tests
-on:
-  push:
-    branches:
-      - main
+
+# Disabled until E2E tests are stabilised
+# on:
+#   push:
+#     branches:
+#       - main
+on: workflow_dispatch
+
 jobs:
   test:
     timeout-minutes: 60

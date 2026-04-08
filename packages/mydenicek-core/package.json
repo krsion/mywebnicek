@@ -9,7 +9,7 @@
         "test": "vitest run --config vitest.config.ts"
     },
     "dependencies": {
-        "@jsr/mydenicek__core": "^0.2.0"
+        "mydenicek-crdt-core": "file:../../../mydenicek-core/packages/core/npm-dist"
     },
     "devDependencies": {
         "typescript": "^5.0.0",

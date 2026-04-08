@@ -1,13 +1,13 @@
 /**
- * DenicekDocument - Document abstraction backed by @mydenicek/document CRDT engine.
+ * DenicekDocument - Document abstraction backed by the Denicek CRDT engine.
  * Wraps the DocumentAdapter to present an ID-based tree API for the React UI.
  */
 
-import { DocumentAdapter } from "@jsr/mydenicek__core";
+import { DocumentAdapter } from "mydenicek-crdt-core";
 import type {
     NodeData as CoreNodeData,
     NodeInput as CoreNodeInput,
-} from "@jsr/mydenicek__core";
+} from "mydenicek-crdt-core";
 
 import type {
     GeneralizedPatch,
@@ -127,7 +127,15 @@ export class DenicekDocument {
     }
 
     updateTag(nodeIds: string[], newTag: string): void {
-        this.adapter.updateTag(nodeIds, newTag);
+        // Work around DocumentAdapter bug: it calls denicek.set(path+"/$tag")
+        // but $tag is not a settable child node. Use denicek.updateTag() directly.
+        const dk = this.adapter.denicekInstance;
+        const pathIndex = (this.adapter as any).pathIndex as Map<string, string>;
+        for (const id of nodeIds) {
+            const path = pathIndex.get(id);
+            if (path) dk.updateTag(path, newTag);
+        }
+        (this.adapter as any).notifyAfterMutation();
     }
 
     spliceValue(nodeIds: string[], index: number, deleteCount: number, insertText: string): void {
