@@ -36,15 +36,18 @@ function renderNode(node: PlainNode): React.ReactNode {
 
     const tag = String(node.$tag);
 
-    // Collect child records as React children
+    // Render children: records recurse, primitives render as text
     const children: React.ReactNode[] = [];
     for (const [key, val] of Object.entries(node)) {
         if (META.has(key) || val === undefined) continue;
         if (isRec(val)) {
             children.push(<React.Fragment key={key}>{renderNode(val)}</React.Fragment>);
+        } else if (typeof val === "string" || typeof val === "number" || typeof val === "boolean") {
+            children.push(<React.Fragment key={key}>{String(val)}</React.Fragment>);
         }
     }
 
+    // Only render known HTML tags; unknown tags become <div>
     const htmlTag = HTML_TAGS.has(tag) ? tag : "div";
     return React.createElement(htmlTag, {}, ...children);
 }
