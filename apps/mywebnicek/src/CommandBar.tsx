@@ -73,7 +73,7 @@ function renderTree(node: PlainNode, path: string, indent: number, lines: string
       lines.push(`${prefix}${path} ▶ "${node["label"]}"`);
       return;
     } else {
-      lines.push(`${prefix}${path} {${tag}}`);
+      lines.push(`${prefix}{} ${path} <${tag}>`);
     }
 
     for (const [key, child] of Object.entries(node)) {
@@ -143,7 +143,7 @@ function getChildCompletions(node: PlainNode): CompletionItem[] {
       } else if (kind === "action") {
         items.push({ name: key, label: `${key} ▶ "${child["label"]}"` });
       } else {
-        items.push({ name: key, label: `${key} {${tag}}` });
+        items.push({ name: key, label: `{} ${key} <${tag}>` });
       }
     }
   }
