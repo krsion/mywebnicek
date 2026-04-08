@@ -51,6 +51,8 @@ export const App = () => {
   }, []);
 
 
+  const [, forceRender] = useState(0);
+
   const denicek = useMemo(() => document.denicekInstance, [document]);
 
   return (
@@ -82,7 +84,7 @@ export const App = () => {
 
         {/* Bottom command bar */}
         <ErrorBoundary>
-          <CommandBar denicek={denicek} version={version} />
+          <CommandBar denicek={denicek} version={version} onChange={() => forceRender(v => v + 1)} />
         </ErrorBoundary>
       </div>
     </PeerAliasProvider>

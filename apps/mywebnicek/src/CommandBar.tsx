@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 export interface CommandBarProps {
   denicek: Denicek;
   version: number;
+  onChange?: () => void; // called after each command to trigger re-render
 }
 
 interface OutputMessage {
@@ -211,7 +212,7 @@ const HELP_TEXT = `Commands:
 
 // ── Component ────────────────────────────────────────────────────────────
 
-export function CommandBar({ denicek, version }: CommandBarProps) {
+export function CommandBar({ denicek, version, onChange }: CommandBarProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -540,7 +541,8 @@ export function CommandBar({ denicek, version }: CommandBarProps) {
     } catch (err) {
       pushOutput({ text: String(err instanceof Error ? err.message : err), kind: "error" });
     }
-  }, [denicek, pushOutput, treeText]);
+    onChange?.();
+  }, [denicek, pushOutput, treeText, onChange]);
 
   // ── Key handlers ───────────────────────────────────────────────────────
 
