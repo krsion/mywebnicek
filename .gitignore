@@ -10,7 +10,7 @@
 # Deno
 node_modules/
 dist/
-deno.lock
+.vite/
 
 # Editor
 .DS_Store
