@@ -1,6 +1,6 @@
 import type { PlainNode, PlainRecord } from "@jsr/mydenicek__core";
 import type { DenicekDocument } from "@mydenicek/document";
-import React from "react";
+import React, { useEffect, useReducer } from "react";
 
 function isRec(v: PlainNode): v is PlainRecord {
     return typeof v === "object" && v !== null && "$tag" in v && !("$items" in v) && !("$ref" in v);
@@ -13,10 +13,27 @@ interface Props {
 }
 
 export function RenderedDocument({ document }: Props) {
-    const tree = document.denicekInstance.materialize();
-    if (!isRec(tree)) return <div>Empty document</div>;
+    // Force re-render on every document change via subscribe
+    const [tick, forceUpdate] = useReducer((x: number) => x + 1, 0);
+
+    useEffect(() => {
+        const unsub = document.subscribe(() => forceUpdate());
+        // Also trigger an immediate re-render to catch init
+        forceUpdate();
+        return unsub;
+    }, [document]);
+
+    // Read fresh tree on every render (tick is a dependency to keep React happy)
+    void tick;
+    let tree: PlainNode;
+    try {
+        tree = document.denicekInstance.materialize();
+    } catch {
+        return <div style={{ color: "#888", padding: 20 }}>Error materializing document</div>;
+    }
+    if (!isRec(tree)) return <div style={{ color: "#888", padding: 20 }}>Empty document</div>;
     const root = tree["root"];
-    if (!root || !isRec(root)) return <div>No root node</div>;
+    if (!root || !isRec(root)) return <div style={{ color: "#888", padding: 20 }}>No root node</div>;
     return <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: 1.6 }}>{renderNode(root)}</div>;
 }
 

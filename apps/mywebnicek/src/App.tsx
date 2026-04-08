@@ -3,13 +3,12 @@ import {
   useConnectivity,
   useDocumentState,
 } from "@mydenicek/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { CommandBar } from "./CommandBar";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { config } from "./config";
 import { PeerAliasProvider } from "./context/PeerAliasContext";
-import { initializeDocument } from "./initializeDocument";
 import { RenderedDocument } from "./RenderedDocument.tsx";
 
 function generateRoomId(): string {
@@ -51,16 +50,6 @@ export const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hasInitialized = useRef(false);
-
-  // Initialize document on mount
-  useEffect(() => {
-    if (hasInitialized.current) return;
-    hasInitialized.current = true;
-    if (!document.getRootId()) {
-      initializeDocument(document);
-    }
-  }, [document]);
 
   const denicek = useMemo(() => document.denicekInstance, [document]);
 
