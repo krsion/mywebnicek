@@ -3,11 +3,11 @@
  * Wraps the DocumentAdapter to present an ID-based tree API for the React UI.
  */
 
-import { DocumentAdapter } from "mydenicek-crdt-core";
+import { DocumentAdapter } from "@jsr/mydenicek__core";
 import type {
     NodeData as CoreNodeData,
     NodeInput as CoreNodeInput,
-} from "mydenicek-crdt-core";
+} from "@jsr/mydenicek__core";
 
 import type {
     GeneralizedPatch,
