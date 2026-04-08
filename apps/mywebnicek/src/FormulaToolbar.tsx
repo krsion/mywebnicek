@@ -8,7 +8,7 @@
  */
 
 import { Combobox, Option, Text } from "@fluentui/react-components";
-import type { DenicekDocument, NodeData } from "@mydenicek/core";
+import type { DenicekDocument, NodeData } from "@mydenicek/document";
 
 import { builtinOperationNames, defaultOperationsMap } from "./formula";
 

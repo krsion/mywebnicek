@@ -1,5 +1,5 @@
 /**
- * @mydenicek/core
+ * @mydenicek/document
  *
  * Document abstraction layer backed by the Denicek CRDT engine.
  * No CRDT internals are exposed — all details are hidden behind DenicekDocument.

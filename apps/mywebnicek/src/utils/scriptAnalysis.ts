@@ -1,4 +1,4 @@
-import type { GeneralizedPatch } from "@mydenicek/core";
+import type { GeneralizedPatch } from "@mydenicek/document";
 
 /**
  * Check if an ID is a variable placeholder ($0, $1, $wrapper, etc.)

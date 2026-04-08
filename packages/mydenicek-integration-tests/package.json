@@ -7,7 +7,7 @@
         "test": "vitest run --config vitest.config.ts"
     },
     "devDependencies": {
-        "@mydenicek/core": "*",
+        "@mydenicek/document": "*",
         "@mydenicek/sync-server": "*",
         "vitest": "^4.0.16"
     }

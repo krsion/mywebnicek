@@ -12,7 +12,7 @@
     "jsx": "react-jsx",
     "noUncheckedSideEffectImports": true,
     "paths": {
-      "@mydenicek/core": [
+      "@mydenicek/document": [
         "../../packages/mydenicek-core/src/index.ts"
       ],
       "@mydenicek/react": [

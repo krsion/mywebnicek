@@ -8,7 +8,7 @@
  * 4. Verify server logs show expected activity
  */
 
-import { DenicekDocument, type NodeData } from "@mydenicek/core";
+import { DenicekDocument, type NodeData } from "@mydenicek/document";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {

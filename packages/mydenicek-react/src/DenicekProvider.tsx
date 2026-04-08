@@ -8,7 +8,7 @@
 import {
     DenicekDocument,
     type SyncState,
-} from "@mydenicek/core";
+} from "@mydenicek/document";
 import { createContext, type ReactNode, useEffect, useMemo, useState } from "react";
 
 // Context types

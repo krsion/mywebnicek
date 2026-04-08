@@ -10,12 +10,12 @@ export default defineConfig({
   base: '/MyDenicek/',
   resolve: {
     alias: {
-      '@mydenicek/core': path.resolve(__dirname, '../../packages/mydenicek-core/src/index.ts'),
+      '@mydenicek/document': path.resolve(__dirname, '../../packages/mydenicek-core/src/index.ts'),
       '@mydenicek/react': path.resolve(__dirname, '../../packages/mydenicek-react/src/index.ts'),
     },
   },
   optimizeDeps: {
-    include: ['mydenicek-crdt-core'],
+    include: ['@jsr/mydenicek__core'],
   },
   plugins: [
     react({
