@@ -79,18 +79,29 @@ export class DenicekDocument {
 
     // ── Mutations ────────────────────────────────────────────────
     createRootNode(tag: string): string {
-        const id = crypto.randomUUID();
-        this.dk.add("", "root", { $tag: tag, $id: id, $kind: "element" } as unknown as PlainNode);
-        this.mut(); return id;
+        const fieldName = tag;
+        this.dk.add("", "root", { $tag: tag, $id: fieldName, $kind: "element" } as unknown as PlainNode);
+        this.mut(); return fieldName;
     }
 
     addChildren(parentId: string, children: NodeInput[], _si?: number): string[] {
         const pp = this.rp(parentId);
         const ids: string[] = [];
+        // Read existing children to avoid field name collisions
+        const existing = new Set<string>();
+        const mat = this.dk.materialize();
+        const parentNode = this.navPlain(mat, pp);
+        if (parentNode && isRec(parentNode)) {
+            for (const key of Object.keys(parentNode)) {
+                existing.add(key);
+            }
+        }
         for (const c of children) {
-            const id = crypto.randomUUID();
-            this.dk.add(pp, id, this.mkRec(c, id) as unknown as PlainNode);
-            ids.push(id);
+            const baseName = this.fieldNameFor(c);
+            const fieldName = this.uniqueField(baseName, existing);
+            existing.add(fieldName);
+            this.dk.add(pp, fieldName, this.mkRec(c, fieldName) as unknown as PlainNode);
+            ids.push(fieldName);
         }
         this.mut(); return ids;
     }
@@ -286,9 +297,14 @@ export class DenicekDocument {
                 const r: Record<string, unknown> = { $tag: input.tag, $id: id, $kind: "element" };
                 if (input.attrs) for (const [k, v] of Object.entries(input.attrs))
                     r[k] = typeof v === "object" && v !== null ? JSON.stringify(v) : v;
-                if (input.children?.length) for (const c of input.children) {
-                    const cid = crypto.randomUUID();
-                    r[cid] = this.mkRec(c, cid);
+                if (input.children?.length) {
+                    const used = new Set<string>(Object.keys(r));
+                    for (const c of input.children) {
+                        const base = this.fieldNameFor(c);
+                        const fn = this.uniqueField(base, used);
+                        used.add(fn);
+                        r[fn] = this.mkRec(c, fn);
+                    }
                 }
                 return r;
             }
@@ -300,6 +316,35 @@ export class DenicekDocument {
             case "ref": return { $tag: "$ref", $id: id, $kind: "ref", target: input.target };
             case "formula": return { $tag: "$formula", $id: id, $kind: "formula", operation: input.operation };
         }
+    }
+
+    private fieldNameFor(input: NodeInput): string {
+        switch (input.kind) {
+            case "element": return input.tag;
+            case "value": return "text";
+            case "action": return input.label.replace(/[^a-zA-Z0-9]/g, "_").toLowerCase() || "action";
+            case "ref": return "ref";
+            case "formula": return input.operation || "formula";
+        }
+    }
+
+    private uniqueField(base: string, existing: Set<string>): string {
+        if (!existing.has(base)) return base;
+        let i = 1;
+        while (existing.has(`${base}_${i}`)) i++;
+        return `${base}_${i}`;
+    }
+
+    private navPlain(root: PlainNode, path: string): PlainNode | undefined {
+        const segs = path.split("/").filter(Boolean);
+        let cur: PlainNode = root;
+        for (const seg of segs) {
+            if (!isRec(cur)) return undefined;
+            const child = cur[seg];
+            if (child === undefined) return undefined;
+            cur = child;
+        }
+        return cur;
     }
 
     private rp(id: string): string {
